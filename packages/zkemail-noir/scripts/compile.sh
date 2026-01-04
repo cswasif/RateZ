@@ -1,0 +1,31 @@
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+
+# Source the common script with version variables and check_versions function
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+
+compile_example() {
+    project=$1
+    echo "Compiling $project"
+    
+    # Use pushd to change to the project directory and save the current directory
+    pushd "$project" > /dev/null
+    
+    # Run the compile command
+    nargo compile --force --silence-warnings
+    
+    # Use popd to return to the previous directory
+    popd > /dev/null
+}
+
+# Check the versions of Noir and BB
+check_versions
+
+cd "$SCRIPT_DIR/.." || { echo "Failed to change directory to $SCRIPT_DIR/.." >&2; exit 1; }
+
+# Loop over every child folder in the examples directory
+for folder in ./examples/*/; do
+    if [ -d "$folder" ]; then
+        compile_example "$folder"
+    fi
+done

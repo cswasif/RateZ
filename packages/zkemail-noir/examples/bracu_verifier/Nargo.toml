@@ -1,0 +1,8 @@
+[package]
+name = "bracu_verifier"
+type = "bin"
+authors = ["ZK RateMyProf"]
+compiler_version = ">=1.0.0"
+
+[dependencies]
+zkemail = { path = "../../lib" }
