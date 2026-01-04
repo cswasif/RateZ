@@ -1,0 +1,35 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { AuthProvider, useAuth } from './auth/ZKAuthProvider';
+import { AuthPage } from './pages/AuthPage';
+import { HomePage } from './pages/HomePage';
+
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" />;
+}
+
+function AppContent() {
+  return (
+    <Routes>
+      <Route path="/login" element={<AuthPage />} />
+      <Route path="/" element={
+        <PrivateRoute>
+          <HomePage />
+        </PrivateRoute>
+      } />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
+  );
+}
+
+export default App;

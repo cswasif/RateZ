@@ -1,0 +1,45 @@
+name: Compile BRACU Verifier Circuit
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'packages/zkemail-noir/**'
+      - '.github/workflows/compile-circuit.yml'
+  workflow_dispatch:
+
+jobs:
+  compile-circuit:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install Noir
+        run: |
+          curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
+          echo "$HOME/.nargo/bin" >> $GITHUB_PATH
+          
+      - name: Install nargo
+        run: |
+          export PATH="$HOME/.nargo/bin:$PATH"
+          noirup --version 1.0.0-beta.5
+          
+      - name: Compile bracu_verifier circuit
+        run: |
+          cd packages/zkemail-noir/examples/bracu_verifier
+          nargo compile
+          
+      - name: Upload compiled circuit
+        uses: actions/upload-artifact@v4
+        with:
+          name: bracu_verifier-circuit
+          path: packages/zkemail-noir/examples/bracu_verifier/target/
+          retention-days: 30
+          
+      - name: Display circuit info
+        run: |
+          cd packages/zkemail-noir/examples/bracu_verifier
+          nargo info
+          ls -lh target/

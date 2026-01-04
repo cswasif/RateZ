@@ -1,0 +1,22 @@
+{
+  "name": "zk-ratemyprof",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "dev:api": "npm run dev --workspace=@zk-ratemyprof/api",
+    "dev:frontend": "npm run dev --workspace=@zk-ratemyprof/frontend",
+    "deploy:api": "npm run deploy --workspace=@zk-ratemyprof/api",
+    "deploy:frontend": "npm run deploy --workspace=@zk-ratemyprof/frontend"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  },
+  "packageManager": "npm@10.0.0"
+}
