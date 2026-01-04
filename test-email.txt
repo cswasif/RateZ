@@ -1,0 +1,31 @@
+Delivered-To: test.student@g.bracu.ac.bd
+Received: by 2002:a05:6a20:4c4b:b0:1c3:dd5e:bb6e with SMTP id b11csp2345678qve;
+        Mon, 3 Jan 2026 12:00:00 -0800 (PST)
+X-Received: by 2002:a05:6a20:4c4b:b0:1c3:dd5e:bb6e with SMTP id b11csp2345678qve;
+        Mon, 3 Jan 2026 12:00:00 -0800 (PST)
+Return-Path: <noreply@bracu.ac.bd>
+Received: from mail-sor-f69.google.com (mail-sor-f69.google.com. [209.85.220.69])
+        by mx.google.com with SMTPS id b11csp2345678qve.1.2026.01.03.12.00.00
+        for <test.student@g.bracu.ac.bd>
+        (Google Transport Security);
+        Mon, 03 Jan 2026 12:00:00 -0800 (PST)
+Received-SPF: pass (google.com: domain of noreply@bracu.ac.bd designates 209.85.220.69 as permitted sender)
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@bracu.ac.bd header.s=default header.b=ABC123def;
+       spf=pass (google.com: domain of noreply@bracu.ac.bd designates 209.85.220.69 as permitted sender) smtp.mailfrom=noreply@bracu.ac.bd;
+       dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=bracu.ac.bd
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=bracu.ac.bd; s=default; t=1767432000;
+        h=from:to:subject:date:message-id;
+        bh=ABC123def+XYZ789ghi=;
+        b=ABC123def+XYZ789ghi+JKL456mno+;
+From: "BRAC University" <noreply@bracu.ac.bd>
+To: test.student@g.bracu.ac.bd
+Subject: LOGIN
+Date: Mon, 3 Jan 2026 12:00:00 -0800
+Message-ID: <ABC123def@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+This is a test email for ZK authentication.

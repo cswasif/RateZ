@@ -1,0 +1,15 @@
+node_modules
+dist
+target
+build
+.env
+.DS_Store
+*.log
+packages/zkemail-noir/target
+nargo.exe
+nargo.zip
+nargo
+zkemail-noir.zip
+bracu_verifier.zip
+noir-1.0.0-beta.17
+noir-1.0.0-beta.17.tar.gz
