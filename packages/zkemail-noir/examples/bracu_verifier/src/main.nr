@@ -4,8 +4,8 @@ use zkemail::{
     MAX_EMAIL_ADDRESS_LENGTH, Sequence,
 };
 
-// Reduced header length for optimization (standard is often 1024)
-global MAX_EMAIL_HEADER_LENGTH: u32 = 512;
+// Increased header length for real-world emails (standard is 1024-4096)
+global MAX_EMAIL_HEADER_LENGTH: u32 = 2560;
 
 // BRACU domain: g.bracu.ac.bd (13 characters)
 global BRACU_DOMAIN_LEN: u32 = 13;
