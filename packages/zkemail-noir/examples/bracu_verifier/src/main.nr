@@ -55,11 +55,15 @@ fn main(
     // So the character at (len - 13 - 1) should be '@' (64)
     // And the characters from (len - 13) to (len) should match the domain
     
-    assert(addr_len > BRACU_DOMAIN_LEN + 1, "Address too short");
+    // Minimum address length: 1 char + '@' + 13 char domain = 15
+    let min_length = BRACU_DOMAIN_LEN + 2; // 15
+    assert(addr_len >= min_length, "Address too short for BRACU domain");
     
+    // Safe subtraction now that we've validated the length
+    // at_index points to where '@' should be
     let at_index = addr_len - BRACU_DOMAIN_LEN - 1;
     let at_char = from_address.get(at_index);
-    assert(at_char == 64, "Invalid domain separator"); // 64 is '@'
+    assert(at_char == 64, "Invalid domain separator - expected '@'"); // 64 is '@'
 
     // Check domain characters
     // g.bracu.ac.bd
