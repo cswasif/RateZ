@@ -40,11 +40,11 @@ export async function generateEmailVerifierInputs(
   rawEmail: string,
   options: ParseOptions = {}
 ): Promise<EmailVerifierInputs> {
-  const { maxHeaderLength = 512 } = options
+  const { maxHeaderLength = 2560 } = options
 
   // Use zkemail-nr to parse the email and extract DKIM components
   const zkInputs = await zkEmailGenerate(rawEmail, {
-    maxHeaderLength,
+    maxHeadersLength: maxHeaderLength,
     maxBodyLength: 0, // Header-only for BRACU verifier
     ignoreBodyHashCheck: true
   })
@@ -58,15 +58,16 @@ export async function generateEmailVerifierInputs(
   }
 
   // Find From header indices in the header bytes
-  const headerString = arrayToString(zkInputs.header.storage)
+  const headerBytes = zkInputs.header.storage.map((s: string) => parseInt(s))
+  const headerString = arrayToString(headerBytes)
   const { headerIndex, headerLength, addressIndex, addressLength } =
     findFromIndices(headerString, fromAddress)
 
   return {
-    emailHeader: zkInputs.header.storage,
+    emailHeader: headerBytes,
     emailHeaderLength: parseInt(zkInputs.header.len),
     pubkey: zkInputs.pubkey.modulus,
-    pubkeyRedc: zkInputs.pubkey.redc_param,
+    pubkeyRedc: zkInputs.pubkey.redc,
     signature: zkInputs.signature,
     fromHeaderIndex: headerIndex,
     fromHeaderLength: headerLength,
@@ -167,3 +168,6 @@ export function validateBRACUEmail(rawEmail: string): { valid: boolean; error?: 
 export function hasDKIMSignature(rawEmail: string): boolean {
   return rawEmail.toLowerCase().includes('dkim-signature')
 }
+
+// Alias for backward compatibility
+export const extractZKInputs = generateEmailVerifierInputs
