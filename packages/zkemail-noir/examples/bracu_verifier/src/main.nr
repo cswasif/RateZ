@@ -1,16 +1,8 @@
 use std::{collections::bounded_vec::BoundedVec, hash::pedersen_hash};
-use zkemail::dkim::RSAPubkey;
-use zkemail::headers::email_address::get_email_address;
-
-// Import constants directly (they're defined as global in lib.nr)
-global KEY_LIMBS_2048: u32 = 18;
-global MAX_EMAIL_ADDRESS_LENGTH: u32 = 320;
-
-// Define Sequence struct locally (it's in lib.nr but not pub exported)
-struct Sequence {
-    index: u32,
-    length: u32,
-}
+use zkemail::{
+    dkim::RSAPubkey, headers::email_address::get_email_address, KEY_LIMBS_2048,
+    MAX_EMAIL_ADDRESS_LENGTH, Sequence,
+};
 
 // Reduced header length for optimization (standard is often 1024)
 global MAX_EMAIL_HEADER_LENGTH: u32 = 512;
@@ -40,7 +32,7 @@ fn main(
 ) -> pub [Field; 2] {
     // 1. Verify DKIM signature over the header
     //    Proves the email integrity and origin (signed by Google/Provider)
-    pubkey.verify_dkim_signature(header, signature);
+    let _ = pubkey.verify_dkim_signature(header, signature);
 
     // 2. Extract "From" email address
     //    We use "from" tag to locate the address in the header
@@ -75,8 +67,8 @@ fn main(
     
     for i in 0..13 {
         // Use unchecked get since we verified length above
-        let char = from_address.get(at_index + 1 + i);
-        assert(char == domain_bytes[i], "Domain mismatch");
+        let byte_val = from_address.get(at_index + 1 + i);
+        assert(byte_val == domain_bytes[i], "Domain mismatch");
     }
 
     // 4. Generate Nullifier
