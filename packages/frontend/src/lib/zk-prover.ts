@@ -76,7 +76,7 @@ export async function generateBRACUProof(
     options: ProverOptions = {}
 ): Promise<ProofResult> {
     const { threads = 1 } = options
-    const CIRCUIT_MAX_REMAINING_HEADER = 2560; // Max remaining header size in circuit
+    const CIRCUIT_MAX_REMAINING_HEADER = 16384; // Max remaining header size in circuit
 
     if (!compiledCircuit) {
         throw new Error('Circuit not loaded. Call setCompiledCircuit() or loadCircuitFromUrl() first.')
@@ -130,18 +130,30 @@ export async function generateBRACUProof(
     let fromAddressIndex = emailInputs.fromAddressIndex || 0;
     let fromAddressLength = emailInputs.fromAddressLength || 0;
 
+    // Debug logging for index adjustment
+    console.log(`📍 Original indices - Header: ${fromHeaderIndex}, Address: ${fromAddressIndex}`);
+    console.log(`📊 Partial hash result - Prehashed: ${partialHashResult.prehashedLength}, Remaining: ${partialHashResult.remaining.length}`);
+
     // Adjust indices for the offset from partial hash
     const offset = partialHashResult.prehashedLength;
     fromHeaderIndex = fromHeaderIndex - offset;
     fromAddressIndex = fromAddressIndex - offset;
 
+    console.log(`🔧 Adjusted indices - Header: ${fromHeaderIndex}, Address: ${fromAddressIndex}`);
+
+    // CRITICAL FIX: If the From header is in the pre-hashed portion, we cannot verify it in circuit
+    // The circuit can only process data in the remaining bytes
+    if (fromHeaderIndex < 0 || fromAddressIndex < 0) {
+        throw new Error(`From header is in pre-hashed portion of email (indices: ${fromHeaderIndex}, ${fromAddressIndex}). This email cannot be verified with the current partial hash approach.`);
+    }
+
     // Validate indices are within circuit bounds (may be less than actual remaining if truncated)
     const effectiveRemainingLength = Math.min(partialHashResult.remaining.length, CIRCUIT_MAX_REMAINING_HEADER);
 
-    if (fromHeaderIndex < 0 || fromHeaderIndex >= effectiveRemainingLength) {
+    if (fromHeaderIndex >= effectiveRemainingLength) {
         throw new Error(`From header index ${fromHeaderIndex} is out of bounds after partial hash adjustment (max: ${effectiveRemainingLength})`)
     }
-    if (fromAddressIndex < 0 || fromAddressIndex >= effectiveRemainingLength) {
+    if (fromAddressIndex >= effectiveRemainingLength) {
         throw new Error(`From address index ${fromAddressIndex} is out of bounds after partial hash adjustment (max: ${effectiveRemainingLength})`)
     }
 

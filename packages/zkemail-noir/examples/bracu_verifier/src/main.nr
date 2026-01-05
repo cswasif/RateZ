@@ -6,7 +6,7 @@ use zkemail::{
 };
 
 // Maximum remaining header length after partial hash precomputation
-global MAX_REMAINING_HEADER_LENGTH: u32 = 2560;
+global MAX_REMAINING_HEADER_LENGTH: u32 = 16384;
 
 // BRACU domain: g.bracu.ac.bd (13 characters)
 global BRACU_DOMAIN_LEN: u32 = 13;
