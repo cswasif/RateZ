@@ -135,12 +135,14 @@ export async function generateBRACUProof(
     fromHeaderIndex = fromHeaderIndex - offset;
     fromAddressIndex = fromAddressIndex - offset;
 
-    // Validate indices are within remaining header bounds
-    if (fromHeaderIndex < 0 || fromHeaderIndex >= partialHashResult.remaining.length) {
-        throw new Error(`From header index ${fromHeaderIndex} is out of bounds after partial hash adjustment`)
+    // Validate indices are within circuit bounds (may be less than actual remaining if truncated)
+    const effectiveRemainingLength = Math.min(partialHashResult.remaining.length, CIRCUIT_MAX_REMAINING_HEADER);
+
+    if (fromHeaderIndex < 0 || fromHeaderIndex >= effectiveRemainingLength) {
+        throw new Error(`From header index ${fromHeaderIndex} is out of bounds after partial hash adjustment (max: ${effectiveRemainingLength})`)
     }
-    if (fromAddressIndex < 0 || fromAddressIndex >= partialHashResult.remaining.length) {
-        throw new Error(`From address index ${fromAddressIndex} is out of bounds after partial hash adjustment`)
+    if (fromAddressIndex < 0 || fromAddressIndex >= effectiveRemainingLength) {
+        throw new Error(`From address index ${fromAddressIndex} is out of bounds after partial hash adjustment (max: ${effectiveRemainingLength})`)
     }
 
     // Step 4: Format circuit inputs with new structure
@@ -158,9 +160,12 @@ export async function generateBRACUProof(
     console.log('📊 Circuit Input Summary:');
     console.log('  Partial hash state:', circuitInputs.partial_header_hash);
     console.log('  Remaining header length:', circuitInputs.remaining_header.len);
+    console.log('  Remaining header storage array length:', circuitInputs.remaining_header.storage.length);
     console.log('  Total header length:', circuitInputs.total_header_length);
     console.log('  From header index:', circuitInputs.from_header_sequence.index);
     console.log('  From address index:', circuitInputs.from_address_sequence.index);
+    console.log('  Pubkey modulus limbs:', circuitInputs.pubkey.modulus.length);
+    console.log('  Signature limbs:', circuitInputs.signature.length);
 
     // Step 5: Execute Noir circuit
     console.log('⚡ Executing circuit...')
@@ -205,13 +210,18 @@ function formatCircuitInputsPartialHash(
     const TARGET_LIMBS = 18;
     const MAX_REMAINING_HEADER = 2560;
 
-    // Helper to pad arrays
+    // Helper to pad arrays to exact length
     const padArray = (arr: any[], length: number, fillValue: string = "0") => {
-        const padded = [...arr];
-        while (padded.length < length) {
-            padded.push(fillValue);
+        const result = [...arr];
+        // Truncate if too long
+        if (result.length > length) {
+            return result.slice(0, length);
         }
-        return padded;
+        // Pad if too short
+        while (result.length < length) {
+            result.push(fillValue);
+        }
+        return result;
     };
 
     // Format remaining header as BoundedVec
@@ -241,7 +251,7 @@ function formatCircuitInputsPartialHash(
         partial_header_hash: Array.from(partialHash.state).map(n => n.toString()),
         remaining_header: {
             storage: paddedRemaining,
-            len: partialHash.remaining.length.toString()
+            len: paddedRemaining.length.toString()  // Use actual storage array length
         },
         total_header_length: partialHash.totalLength.toString(),
         pubkey: {

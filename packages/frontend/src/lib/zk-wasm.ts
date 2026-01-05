@@ -7,9 +7,13 @@ async function loadWasmModule() {
   if (wasmModule) return wasmModule;
 
   try {
-    // Use dynamic import that TypeScript won't resolve at compile time
-    const moduleName = './zk-wasm-pkg/zk_wasm';
-    wasmModule = await (eval(`import('${moduleName}')`) as Promise<any>);
+    // Dynamic import with proper error handling
+    wasmModule = await import('./zk-wasm-pkg/zk_wasm');
+    // Initialize the WASM module
+    if (wasmModule && wasmModule.default && !wasmInitialized) {
+      await wasmModule.default();
+      wasmInitialized = true;
+    }
     return wasmModule;
   } catch (error) {
     console.warn('zk-wasm-pkg not available, zk-wasm functionality will be disabled:', error);
@@ -18,17 +22,11 @@ async function loadWasmModule() {
 }
 
 export async function initZK() {
-  if (!wasmInitialized) {
-    const module = await loadWasmModule();
-    if (module) {
-      await module.default(); // init function
-      wasmInitialized = true;
-    } else {
-      throw new Error('zk-wasm-pkg module not available');
-    }
+  const module = await loadWasmModule();
+  if (!module) {
+    throw new Error('zk-wasm-pkg module not available');
   }
 
-  const module = await loadWasmModule();
   return {
     verifier: new module.ZKWASMVerifier(),
     prover: new module.ZKWASMProver()
@@ -183,4 +181,53 @@ export function computePartialHashFallback(
     totalLength: headerLen,
     prehashedLength: splitPoint,
   };
+}
+
+
+// ============================================================================
+// DKIM Parsing Functions
+// ============================================================================
+
+export interface DKIMResult {
+  pubkeyModulus: string[];
+  pubkeyRedc: string[];
+  signature: string[];
+  fromHeaderIndex: number;
+  fromHeaderLength: number;
+  fromAddressIndex: number;
+  fromAddressLength: number;
+  fromEmail: string;
+}
+
+/**
+ * Parse DKIM signature and extract circuit inputs using WASM
+ */
+export async function parseDKIMFromEmail(emailBytes: Uint8Array): Promise<DKIMResult> {
+  const module = await loadWasmModule();
+
+  if (!module) {
+    throw new Error('zk-wasm module not available');
+  }
+
+  if (typeof module.parse_dkim_from_email !== 'function') {
+    throw new Error('parse_dkim_from_email not found in WASM module. Please rebuild the WASM.');
+  }
+
+  try {
+    const result = module.parse_dkim_from_email(emailBytes);
+
+    return {
+      pubkeyModulus: result.pubkey_modulus,
+      pubkeyRedc: result.pubkey_redc,
+      signature: result.signature,
+      fromHeaderIndex: Number(result.from_header_index),
+      fromHeaderLength: Number(result.from_header_length),
+      fromAddressIndex: Number(result.from_address_index),
+      fromAddressLength: Number(result.from_address_length),
+      fromEmail: result.from_email,
+    };
+  } catch (error) {
+    console.error('DKIM parsing failed:', error);
+    throw error;
+  }
 }

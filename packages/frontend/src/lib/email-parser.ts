@@ -31,64 +31,59 @@ async function loadZkEmailGenerate() {
 }
 
 // Fallback email parser for browser compatibility
-function generateFallbackEmailInputs(rawEmail: string, _options: any = {}) {
-  console.warn('Using fallback email parser due to browser compatibility issues');
+// Fallback email parser for browser compatibility
+async function generateFallbackEmailInputs(rawEmail: string, _options: any = {}) {
+  console.log('Using browser-compatible WASM email parser...');
 
-  // Basic email parsing for BRACU domain validation
-  const lines = rawEmail.split('\n');
-  const fromHeader = lines.find(line => line.toLowerCase().startsWith('from:'));
+  // Use WASM parser for proper DKIM extraction
+  try {
+    // We strictly rely on the WASM module now
+    const { parseDKIMFromEmail } = await import('./zk-wasm');
+    const headerBytes = new TextEncoder().encode(rawEmail);
+    const dkimResult = await parseDKIMFromEmail(headerBytes);
 
-  if (!fromHeader) {
-    throw new Error('No From header found in email');
+    console.log("✅ WASM DKIM parsing successful!");
+
+    // Extract header only for return
+    const headerOnly = rawEmail.split('\r\n\r\n')[0] || rawEmail.split('\n\n')[0];
+    const headerOnlyBytes = new TextEncoder().encode(headerOnly);
+
+    // Truncate if needed
+    const maxLen = _options.maxHeadersLength || 2560;
+    let finalHeaderBytes = headerOnlyBytes;
+    if (finalHeaderBytes.length > maxLen) {
+      finalHeaderBytes = finalHeaderBytes.slice(0, maxLen);
+    }
+
+    return {
+      header: {
+        storage: Array.from(finalHeaderBytes).map(b => b.toString())
+      },
+      headerLength: finalHeaderBytes.length,
+      pubkey: {
+        modulus: dkimResult.pubkeyModulus,
+        redc: dkimResult.pubkeyRedc
+      },
+      signature: dkimResult.signature,
+      dkim_header_sequence: {
+        index: 0,
+        length: headerOnlyBytes.length
+      },
+      from_header_sequence: {
+        index: dkimResult.fromHeaderIndex,
+        length: dkimResult.fromHeaderLength
+      },
+      from_address_sequence: {
+        index: dkimResult.fromAddressIndex,
+        length: dkimResult.fromAddressLength
+      },
+      fromAddress: dkimResult.fromEmail,
+      fromDomain: dkimResult.fromEmail.split('@')[1]
+    };
+  } catch (e) {
+    console.error("❌ WASM DKIM parsing failed:", e);
+    throw new Error(`DKIM parsing failed: ${e instanceof Error ? e.message : String(e)}. Ensure your email has a valid DKIM-Signature and the WASM module is built.`);
   }
-
-  // Extract email address from From header
-  const emailMatch = fromHeader.match(/<([^>]+)>/);
-  const emailAddress = emailMatch ? emailMatch[1] : fromHeader.split(':')[1].trim();
-
-  if (!emailAddress.endsWith('@g.bracu.ac.bd')) {
-    throw new Error(`Invalid email domain. Must be @g.bracu.ac.bd, got: ${emailAddress}`);
-  }
-
-  // Extract just the header portion
-  const headerOnly = rawEmail.split('\n\n')[0];
-
-  // Convert email to bytes
-  let headerBytes = new TextEncoder().encode(headerOnly);
-
-  // Truncate to maxHeaderLength if necessary
-  const maxLen = _options.maxHeadersLength || 2560;
-  if (headerBytes.length > maxLen) {
-    headerBytes = headerBytes.slice(0, maxLen);
-  }
-
-  // Mock DKIM components (these would normally be extracted from the email)
-  // Return in the format expected by the main function
-  return {
-    header: {
-      storage: Array.from(headerBytes).map(b => b.toString())
-    },
-    headerLength: headerBytes.length,
-    pubkey: {
-      modulus: ['0x1234567890abcdef'], // Mock RSA public key
-      redc: ['0xabcdef1234567890'] // Mock reduced form
-    },
-    signature: ['0xdeadbeefcafebabe'], // Mock signature
-    dkim_header_sequence: {
-      index: 0,
-      length: headerBytes.length
-    },
-    from_header_sequence: {
-      index: headerOnly.indexOf('From:'),
-      length: fromHeader.length
-    },
-    from_address_sequence: {
-      index: headerOnly.indexOf(emailAddress),
-      length: emailAddress.length
-    },
-    fromAddress: emailAddress,
-    fromDomain: 'g.bracu.ac.bd'
-  };
 }
 
 export interface EmailVerifierInputs {
