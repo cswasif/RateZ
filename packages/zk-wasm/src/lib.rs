@@ -4,7 +4,6 @@ use ark_groth16::{Groth16, Proof, ProvingKey, VerifyingKey};
 use ark_serialize::CanonicalDeserialize;
 use ark_snark::SNARK;
 use std::collections::HashMap;
-use sha2::{Sha256, Digest, digest::FixedOutput};
 
 // SHA256 block size in bytes
 const SHA256_BLOCK_SIZE: usize = 64;
@@ -291,13 +290,7 @@ fn sha256_compress(state: &mut [u32; 8], block: &[u32; 16]) {
     state[7] = state[7].wrapping_add(h);
 }
 
-/// Compute full SHA256 hash (for testing/verification)
-#[wasm_bindgen]
-pub fn compute_sha256(data: &[u8]) -> Vec<u8> {
-    let mut hasher = Sha256::new();
-    hasher.update(data);
-    hasher.finalize().to_vec()
-}
+
 
 // ============================================================================
 // Existing ZK Verifier/Prover code below
