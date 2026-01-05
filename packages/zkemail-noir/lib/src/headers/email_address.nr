@@ -57,9 +57,9 @@ pub fn parse_email_address<let MAX_HEADER_LENGTH: u32>(
     // If index is 0, we skip the check entirely (no previous character to validate)
     if email_address_sequence.end_index() < header.len() {
         assert(
-            EMAIL_ADDRESS_CHAR_TABLE[header.get_unchecked(
+            (EMAIL_ADDRESS_CHAR_TABLE[header.get_unchecked(
                 email_address_sequence.index + email_address_sequence.length,
-            )] == 3 | header.get_unchecked(email_address_sequence.index + email_address_sequence.length) == 32,
+            )] == 3) | (header.get_unchecked(email_address_sequence.index + email_address_sequence.length) == 32),
             "Email address must end with an acceptable character",
         );
     }
