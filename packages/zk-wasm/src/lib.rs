@@ -520,13 +520,12 @@ fn bigint_to_limbs(value: &BigUint, num_limbs: usize, limb_bits: usize) -> Vec<S
 }
 
 /// Calculate REDC parameter for Montgomery/Barrett reduction used in Noir
-fn calculate_redc_param(modulus: &BigUint, num_limbs: usize, limb_bits: usize) -> Vec<String> {
     // Noir's BigNum library uses Barrett Reduction.
     // The parameter is: floor(2^(2*k + 4) / modulus)
-    // where k is the number of bits in the modulus.
-    // See: https://github.com/noir-lang/noir-bignum-paramgen/blob/main/src/lib.rs
-
-    let k = modulus.bits();
+    // where k is the number of bits in the *container* (num_limbs * limb_bits) used by the circuit.
+    // This fixed width is essential for the circuit's static arithmetic.
+    
+    let k = (num_limbs * limb_bits) as u64;
     // 4 bits for overflow protection as defined in noir-bignum-paramgen
     let overflow_bits = 4;
     
