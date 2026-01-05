@@ -26,8 +26,8 @@ jobs:
     - name: Install Noir
       run: |
         curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-        echo "$HOME/.noir/bin" >> $GITHUB_PATH
-        $HOME/.noir/bin/noirup --version 1.0.0-beta.5
+        echo "$HOME/.nargo/bin" >> $GITHUB_PATH
+        $HOME/.nargo/bin/noirup --version 1.0.0-beta.5
     
     - name: Fetch Rust dependencies
       run: |
