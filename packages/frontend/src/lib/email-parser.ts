@@ -123,6 +123,8 @@ function findFromIndices(
     const afterFrom = headerString.slice(headerIndex)
     const headerEndMatch = afterFrom.match(/\r?\n(?![^\S\r\n])/)
     headerLength = headerEndMatch?.index || afterFrom.length
+  } else {
+    throw new Error('Could not find "From:" header in email')
   }
 
   // Find email address position
@@ -130,10 +132,24 @@ function findFromIndices(
   const headerLower = headerString.toLowerCase()
   const addressPos = headerLower.indexOf(addressLower)
 
+  if (addressPos < 0) {
+    throw new Error(`Could not find email address "${emailAddress}" in header`)
+  }
+
+  // Validate: address must be at least 15 chars for BRACU domain (x@g.bracu.ac.bd)
+  if (emailAddress.length < 15) {
+    throw new Error(`Email address "${emailAddress}" is too short. BRACU emails must be at least 15 characters.`)
+  }
+
+  // Validate: address should be within or after the From header
+  if (addressPos < headerIndex) {
+    throw new Error(`Email address found before From header - indices may be incorrect`)
+  }
+
   return {
     headerIndex,
     headerLength,
-    addressIndex: addressPos >= 0 ? addressPos : 0,
+    addressIndex: addressPos,
     addressLength: emailAddress.length
   }
 }
