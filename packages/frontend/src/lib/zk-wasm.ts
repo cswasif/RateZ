@@ -201,6 +201,7 @@ export interface DKIMResult {
 
 /**
  * Parse DKIM signature and extract circuit inputs using WASM
+ * Now fetches REAL public key via DoH
  */
 export async function parseDKIMFromEmail(emailBytes: Uint8Array): Promise<DKIMResult> {
   const module = await loadWasmModule();
@@ -214,11 +215,27 @@ export async function parseDKIMFromEmail(emailBytes: Uint8Array): Promise<DKIMRe
   }
 
   try {
+    // 1. Parse Email via WASM to get Signature, Selector, Domain
     const result = module.parse_dkim_from_email(emailBytes);
+    const selector = result.selector;
+    const domain = result.domain;
+
+    console.log(`🔍 Found DKIM Selector: ${selector}, Domain: ${domain}`);
+
+    if (!selector || !domain) {
+      throw new Error("Could not find selector/domain in DKIM signature");
+    }
+
+    // 2. Fetch REAL Public Key from DNS (Google DoH)
+    const pubkeyBase64 = await fetchDkimPublicKey(selector, domain);
+    console.log("🔑 Fetched Real Public Key from DNS");
+
+    // 3. Format Public Key via WASM
+    const pubkeyInputs = module.compute_pubkey_inputs(pubkeyBase64);
 
     return {
-      pubkeyModulus: result.pubkey_modulus,
-      pubkeyRedc: result.pubkey_redc,
+      pubkeyModulus: pubkeyInputs.modulus,
+      pubkeyRedc: pubkeyInputs.redc,
       signature: result.signature,
       fromHeaderIndex: Number(result.from_header_index),
       fromHeaderLength: Number(result.from_header_length),
@@ -229,5 +246,37 @@ export async function parseDKIMFromEmail(emailBytes: Uint8Array): Promise<DKIMRe
   } catch (error) {
     console.error('DKIM parsing failed:', error);
     throw error;
+  }
+}
+
+/**
+ * Fetch DKIM Public Key from DNS using Google DoH
+ */
+async function fetchDkimPublicKey(selector: string, domain: string): Promise<string> {
+  const url = `https://dns.google/resolve?name=${selector}._domainkey.${domain}&type=TXT`;
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!data.Answer || data.Answer.length === 0) {
+      throw new Error("No DNS TXT record found for DKIM key");
+    }
+
+    // Combine multiple strings if split
+    // Record format: "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCpK..."
+    const txtRecord = data.Answer[0].data.replace(/"/g, '');
+
+    // Extract p= (public key)
+    const match = txtRecord.match(/p=([^;]+)/);
+    if (!match) {
+      throw new Error("No public key (p=) found in DNS record");
+    }
+
+    return match[1].replace(/\s/g, '');
+  } catch (e) {
+    console.error("DNS Lookup failed:", e);
+    // Fallback for testing ONLY if DNS fails (e.g. offline)
+    // This is Google's 2023 key as an example, but we really want the live one
+    throw new Error(`Failed to fetch DKIM key: ${e instanceof Error ? e.message : String(e)}`);
   }
 }

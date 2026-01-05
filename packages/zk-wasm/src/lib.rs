@@ -309,6 +309,27 @@ pub struct DKIMResult {
     from_address_index: usize,
     from_address_length: usize,
     from_email: String,
+    selector: String,
+    domain: String,
+}
+
+#[wasm_bindgen]
+pub struct PubkeyResult {
+    modulus: Vec<String>,
+    redc: Vec<String>,
+}
+
+#[wasm_bindgen]
+impl PubkeyResult {
+    #[wasm_bindgen(getter)]
+    pub fn modulus(&self) -> Vec<String> {
+        self.modulus.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn redc(&self) -> Vec<String> {
+        self.redc.clone()
+    }
 }
 
 #[wasm_bindgen]
@@ -352,6 +373,16 @@ impl DKIMResult {
     pub fn from_email(&self) -> String {
         self.from_email.clone()
     }
+
+    #[wasm_bindgen(getter)]
+    pub fn selector(&self) -> String {
+        self.selector.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn domain(&self) -> String {
+        self.domain.clone()
+    }
 }
 
 /// Parse DKIM signature from email and extract circuit inputs
@@ -367,9 +398,8 @@ pub fn parse_dkim_from_email(email_bytes: &[u8]) -> Result<DKIMResult, JsValue> 
     let signature_bigint = parse_base64_to_bigint(&dkim_sig.b)
         .ok_or_else(|| JsValue::from_str("Failed to parse DKIM signature"))?;
     
-    // For now, stub the public key - in production this would query DNS
-    // The public key would be fetched via: dig TXT {selector}._domainkey.{domain}
-    // For now we'll create a mock 2048-bit key that the circuit expects
+    // Use stub pubkey relative to parsed signature (Just to fill valid-looking limbs)
+    // The REAL pubkey must be fetched via DNS and processed with compute_pubkey_inputs
     let pubkey_modulus = create_stub_pubkey();
     
     // Convert to 18 limbs (120-bit each for 2048-bit key)
@@ -390,14 +420,31 @@ pub fn parse_dkim_from_email(email_bytes: &[u8]) -> Result<DKIMResult, JsValue> 
         from_address_index: addr_index,
         from_address_length: addr_length,
         from_email,
+        selector: dkim_sig.s,
+        domain: dkim_sig.d,
+    })
+}
+
+/// Compute circuit inputs from a real RSA Public Key (base64)
+#[wasm_bindgen]
+pub fn compute_pubkey_inputs(pubkey_base64: &str) -> Result<PubkeyResult, JsValue> {
+    let pubkey_bigint = parse_base64_to_bigint(pubkey_base64)
+        .ok_or_else(|| JsValue::from_str("Failed to parse Public Key base64"))?;
+
+    let modulus = bigint_to_limbs(&pubkey_bigint, 18, 120);
+    let redc = calculate_redc_param(&pubkey_bigint, 18, 120);
+
+    Ok(PubkeyResult {
+        modulus,
+        redc
     })
 }
 
 /// Extract DKIM-Signature header from email
 struct DKIMSignature {
     b: String,    // base64-encoded signature
-    _s: String,   // selector
-    _d: String,   // domain
+    s: String,   // selector
+    d: String,   // domain
 }
 
 fn extract_dkim_signature(email: &str) -> Result<DKIMSignature, JsValue> {
@@ -425,7 +472,7 @@ fn extract_dkim_signature(email: &str) -> Result<DKIMSignature, JsValue> {
     // Extract s= (selector)
     let s_regex = Regex::new(r"s=([^;\s]+)")
         .map_err(|e| JsValue::from_str(&format!("Regex error: {}", e)))?;
-    let _s = s_regex.captures(&dkim_header)
+    let s = s_regex.captures(&dkim_header)
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().to_string())
         .unwrap_or_default();
@@ -433,12 +480,12 @@ fn extract_dkim_signature(email: &str) -> Result<DKIMSignature, JsValue> {
     // Extract d= (domain)
     let d_regex = Regex::new(r"d=([^;\s]+)")
         .map_err(|e| JsValue::from_str(&format!("Regex error: {}", e)))?;
-    let _d = d_regex.captures(&dkim_header)
+    let d = d_regex.captures(&dkim_header)
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().to_string())
         .unwrap_or_default();
 
-    Ok(DKIMSignature { b, _s, _d })
+    Ok(DKIMSignature { b, s, d })
 }
 
 /// Parse base64 to BigInt
