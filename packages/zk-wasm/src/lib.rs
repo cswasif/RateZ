@@ -523,10 +523,10 @@ fn bigint_to_limbs(value: &BigUint, num_limbs: usize, limb_bits: usize) -> Vec<S
 fn calculate_redc_param(modulus: &BigUint, num_limbs: usize, limb_bits: usize) -> Vec<String> {
     // Noir's BigNum library uses Barrett Reduction.
     // The parameter is: floor(2^(2*k + 4) / modulus)
-    // where k is the number of bits in the *container* (num_limbs * limb_bits) used by the circuit.
-    // This fixed width is essential for the circuit's static arithmetic.
-    
-    let k = (num_limbs * limb_bits) as u64;
+    // where k is the bit size defined in the circuit's BigNumParams (2048).
+    // It must strictly be 2048, not modulus.bits() (which might be 2047) nor container bits (2160).
+
+    let k = 2048u64;
     // 4 bits for overflow protection as defined in noir-bignum-paramgen
     let overflow_bits = 4;
     
