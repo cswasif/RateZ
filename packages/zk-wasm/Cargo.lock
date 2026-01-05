@@ -770,9 +770,11 @@ dependencies = [
  "ark-std",
  "console_error_panic_hook",
  "getrandom",
+ "js-sys",
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
+ "sha2",
  "wasm-bindgen",
 ]
 

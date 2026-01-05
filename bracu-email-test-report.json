@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-01-05T11:44:18.396Z",
+  "summary": {
+    "total": 4,
+    "passed": 1,
+    "failed": 3,
+    "successRate": "25.0%"
+  },
+  "details": [
+    {
+      "name": "Valid BRACU Email",
+      "status": "FAILED",
+      "error": "DKIM signature verification failed for domain bracu.ac.bd. Reason: body hash did not verify"
+    },
+    {
+      "name": "Invalid Domain Email",
+      "status": "PASSED",
+      "error": "DKIM signature verification failed for domain gmail.com. Reason: body hash did not verify"
+    },
+    {
+      "name": "BRACU Faculty Email",
+      "status": "FAILED",
+      "error": "DKIM signature verification failed for domain bracu.ac.bd. Reason: body hash did not verify"
+    },
+    {
+      "name": "BRACU Staff Email",
+      "status": "FAILED",
+      "error": "DKIM signature verification failed for domain bracu.ac.bd. Reason: body hash did not verify"
+    }
+  ]
+}

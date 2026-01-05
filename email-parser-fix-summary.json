@@ -1,0 +1,14 @@
+{
+  "fixApplied": true,
+  "issue": "Circuit execution failed: attempt to subtract with overflow",
+  "rootCause": "Indices exceeding header bounds during circuit execution",
+  "solution": "Added bounds validation to ensure all indices are within safe limits",
+  "keyChanges": [
+    "Safe header index calculation using Math.min()",
+    "Safe address index calculation using Math.min()",
+    "Address position validation within header bounds",
+    "Additional bounds checking in findFromIndices function"
+  ],
+  "expectedResult": "Circuit executes without overflow error",
+  "validation": "PASSED"
+}

@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-01-05T11:47:29.334Z",
+  "summary": {
+    "totalTests": 13,
+    "passed": 12,
+    "failed": 1,
+    "successRate": "92.3%"
+  },
+  "categories": {
+    "validation": 3,
+    "rejection": 7,
+    "index": 2,
+    "failed": 1
+  },
+  "details": [
+    {
+      "name": "Empty Email Content",
+      "status": "PASSED",
+      "type": "rejection"
+    },
+    {
+      "name": "Missing From Header",
+      "status": "PASSED",
+      "type": "rejection"
+    },
+    {
+      "name": "Malformed From Header",
+      "status": "PASSED",
+      "type": "rejection"
+    },
+    {
+      "name": "From Header Without Email",
+      "status": "PASSED",
+      "type": "rejection"
+    },
+    {
+      "name": "Invalid Domain Format",
+      "status": "PASSED",
+      "type": "rejection"
+    },
+    {
+      "name": "Wrong Domain Suffix",
+      "status": "PASSED",
+      "type": "rejection"
+    },
+    {
+      "name": "Subdomain Instead of g.",
+      "status": "PASSED",
+      "type": "rejection"
+    },
+    {
+      "name": "Valid BRACU Format",
+      "status": "PASSED",
+      "type": "validation"
+    },
+    {
+      "name": "Valid BRACU with Name",
+      "status": "PASSED",
+      "type": "validation"
+    },
+    {
+      "name": "Case Insensitive Domain",
+      "status": "PASSED",
+      "type": "validation"
+    },
+    {
+      "name": "From at Beginning",
+      "status": "PASSED",
+      "type": "index"
+    },
+    {
+      "name": "From in Middle",
+      "status": "PASSED",
+      "type": "index"
+    },
+    {
+      "name": "Multiple From-like Headers",
+      "status": "FAILED",
+      "error": "Invalid email domain. Must be @g.bracu.ac.bd, got: spam@bad.com"
+    }
+  ],
+  "productionReady": false
+}

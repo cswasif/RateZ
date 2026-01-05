@@ -26,9 +26,8 @@ jobs:
     - name: Install Noir
       run: |
         curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-        source /home/runner/.bashrc
-        export PATH="$HOME/.noir/bin:$PATH"
-        noirup --version 1.0.0-beta.5
+        echo "$HOME/.noir/bin" >> $GITHUB_PATH
+        $HOME/.noir/bin/noirup --version 1.0.0-beta.5
     
     - name: Fetch Rust dependencies
       run: |
@@ -42,8 +41,6 @@ jobs:
     
     - name: Compile Noir circuits
       run: |
-        source /home/runner/.bashrc
-        export PATH="$HOME/.noir/bin:$PATH"
         cd packages/zkemail-noir/examples/bracu_verifier
         nargo compile
         mkdir -p ../../../frontend/public/circuits

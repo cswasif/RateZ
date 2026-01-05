@@ -1,0 +1,78 @@
+{
+  "timestamp": "2026-01-05T11:45:29.319Z",
+  "summary": {
+    "total": 11,
+    "passed": 6,
+    "failed": 5,
+    "successRate": "54.5%"
+  },
+  "domainValidationTests": [
+    {
+      "name": "Valid Student Email",
+      "status": "FAILED",
+      "address": "student123@bracu.ac.bd",
+      "expected": "VALID",
+      "actual": "INVALID"
+    },
+    {
+      "name": "Valid Faculty Email",
+      "status": "FAILED",
+      "address": "professor.faculty@bracu.ac.bd",
+      "expected": "VALID",
+      "actual": "INVALID"
+    },
+    {
+      "name": "Valid Staff Email",
+      "status": "FAILED",
+      "address": "staff.member@bracu.ac.bd",
+      "expected": "VALID",
+      "actual": "INVALID"
+    },
+    {
+      "name": "Invalid Gmail Email",
+      "status": "PASSED",
+      "address": "student@gmail.com",
+      "result": "INVALID"
+    },
+    {
+      "name": "Invalid Yahoo Email",
+      "status": "PASSED",
+      "address": "user@yahoo.com",
+      "result": "INVALID"
+    },
+    {
+      "name": "Invalid Subdomain",
+      "status": "PASSED",
+      "address": "student@mail.bracu.ac.bd",
+      "result": "INVALID"
+    },
+    {
+      "name": "Case Sensitivity Test",
+      "status": "FAILED",
+      "address": "Student@BRACU.AC.BD",
+      "expected": "VALID",
+      "actual": "INVALID"
+    },
+    {
+      "name": "Mixed Case Domain",
+      "status": "FAILED",
+      "address": "student@BrAcU.Ac.Bd",
+      "expected": "VALID",
+      "actual": "INVALID"
+    }
+  ],
+  "emailParsingTests": [
+    {
+      "name": "Standard From Header",
+      "expectedFrom": "student@bracu.ac.bd"
+    },
+    {
+      "name": "From Header with Name",
+      "expectedFrom": "student@bracu.ac.bd"
+    },
+    {
+      "name": "From Header with Quotes",
+      "expectedFrom": "student@bracu.ac.bd"
+    }
+  ]
+}

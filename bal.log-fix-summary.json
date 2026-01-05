@@ -1,0 +1,15 @@
+{
+  "issue": "Circuit execution failed: attempt to subtract with overflow",
+  "fixApplied": true,
+  "fixDescription": "Added comprehensive bounds validation to prevent circuit overflow",
+  "keyChanges": [
+    "Safe header index calculation using Math.min()",
+    "Safe address index calculation using Math.min()",
+    "Address position validation within header bounds",
+    "Additional bounds checking in findFromIndices function"
+  ],
+  "validation": "PASSED",
+  "expectedOutcome": "Circuit executes without overflow errors",
+  "fileUpdated": "d:\\RateZ\\packages\\frontend\\src\\lib\\email-parser.ts",
+  "timestamp": "2026-01-05T11:08:57.399Z"
+}

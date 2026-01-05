@@ -12,6 +12,12 @@
 // snarkjs will be loaded dynamically
 let snarkjs: any = null;
 
+// Type declaration for snarkjs
+type SnarkjsModule = {
+  groth16: any;
+  plonk: any;
+};
+
 interface CircuitInputs {
     // Email header components
     emailHeader?: number[];
@@ -49,7 +55,9 @@ class SnarkjsProver {
 
         try {
             // Dynamically import snarkjs (it's a large library)
-            const snarkjsModule = await import('snarkjs');
+            // Use dynamic import that TypeScript won't resolve at compile time
+            const moduleName = 'snarkjs';
+            const snarkjsModule = await (eval(`import('${moduleName}')`) as Promise<SnarkjsModule>);
             snarkjs = snarkjsModule;
             this.initialized = true;
             console.log('[SnarkjsProver] ✅ snarkjs loaded');

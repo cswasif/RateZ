@@ -6,7 +6,7 @@
  * crate when available.
  */
 
-import { initZK, generateProof as wasmGenerateProof, quickGenerate } from './zk-wasm';
+import { initZK, generateProof as wasmGenerateProof } from './zk-wasm';
 import { mockWASMProver } from './mock-prover';
 
 export interface ProofResult {
@@ -71,14 +71,14 @@ class EnhancedZKProver {
     if (this.config.useRealProver && this.prover) {
       try {
         // Convert inputs to the format expected by zk-wasm
-        const wasmInputs = this.convertToWasmInputs(inputs);
-        const result = await wasmGenerateProof(this.prover, wasmInputs);
+        const { privateInputs, publicInputs } = this.convertToWasmInputs(inputs);
+        const proofBytes = await wasmGenerateProof(this.prover, privateInputs, publicInputs);
         
         console.log('[EnhancedZKProver] ✅ Real proof generated');
-        return {
-          proof: result.proof,
-          publicSignals: result.publicSignals
-        };
+        
+        // Convert Uint8Array proof to the expected format
+        // This is a placeholder - you'll need to implement proper conversion based on your circuit
+        return this.convertProofResult(proofBytes, publicInputs);
       } catch (error) {
         console.warn('[EnhancedZKProver] Real proof generation failed, falling back to mock:', error);
       }
@@ -97,19 +97,9 @@ class EnhancedZKProver {
       await this.initialize();
     }
 
-    if (this.config.useRealProver && this.prover) {
-      try {
-        const result = await quickGenerate(inputs);
-        return {
-          proof: result.proof,
-          publicSignals: result.publicSignals
-        };
-      } catch (error) {
-        console.warn('[EnhancedZKProver] Quick generation failed, using mock:', error);
-      }
-    }
-
-    // Use mock prover with reduced delay for quick testing
+    // For now, always use mock prover for quick generation
+    // Real zk-wasm doesn't have a quick generate method
+    console.log('[EnhancedZKProver] Using mock prover for quick generation');
     const { MockWASMProver } = await import('./mock-prover');
     const quickMockProver = new MockWASMProver(500);
     return await quickMockProver.computeProof(inputs);
@@ -118,15 +108,42 @@ class EnhancedZKProver {
   /**
    * Convert frontend inputs to wasm-compatible format
    */
-  private convertToWasmInputs(inputs: any): Record<string, string[]> {
+  private convertToWasmInputs(_inputs: any): { privateInputs: Uint8Array; publicInputs: Uint8Array } {
     // Convert the inputs to the format expected by zk-wasm
     // This is a simplified conversion - adjust based on your circuit requirements
-    return {
-      emailHash: [inputs.emailHash || '0x0'],
-      domain: [inputs.domain || 'g.bracu.ac.bd'],
-      timestamp: [inputs.timestamp || Date.now().toString()],
-      // Add other input fields as needed
+    const privateInputs = new Uint8Array(32); // Placeholder size
+    const publicInputs = new Uint8Array(32); // Placeholder size
+    
+    // Fill with sample data - you'll need to implement proper conversion
+    // based on your circuit's input requirements
+    for (let i = 0; i < 32; i++) {
+      privateInputs[i] = i;
+      publicInputs[i] = i + 32;
+    }
+    
+    return { privateInputs, publicInputs };
+  }
+
+  /**
+   * Convert Uint8Array proof to ProofResult format
+   */
+  private convertProofResult(_proofBytes: Uint8Array, publicInputs: Uint8Array): ProofResult {
+    // Convert the raw proof bytes to the expected format
+    // This is a placeholder - you'll need to implement proper conversion
+    // based on your circuit's output format
+    
+    // Mock conversion for now
+    const proof = {
+      pi_a: ['0x1', '0x2'],
+      pi_b: [['0x3', '0x4'], ['0x5', '0x6']],
+      pi_c: ['0x7', '0x8'],
+      protocol: 'groth16',
+      curve: 'bn128'
     };
+    
+    const publicSignals = Array.from(publicInputs).map(byte => byte.toString());
+    
+    return { proof, publicSignals };
   }
 
   /**

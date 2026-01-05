@@ -9,6 +9,13 @@ import { UltraPlonkBackend } from '@aztec/bb.js'
 import { Noir, type CompiledCircuit } from '@noir-lang/noir_js'
 // Use our wrapper which calculates extra circuit inputs like from_header_sequence
 import { generateEmailVerifierInputs } from '../lib/email-parser'
+// Import partial hash functions from zk-wasm
+import {
+    computePartialHash,
+    computePartialHashFallback,
+    isPartialHashAvailable,
+    type PartialHashResult
+} from '../lib/zk-wasm'
 
 // Manual WASM initialization imports
 import initAcvm from '@noir-lang/acvm_js';
@@ -16,8 +23,12 @@ import initAbi from '@noir-lang/noirc_abi';
 
 // Import WASM URLs (assuming they are in public folder or resolved by Vite)
 // We use direct paths to public/ which we copied
-const ACVM_WASM_URL = '/acvm_js_bg.wasm';
-const NOIRC_ABI_WASM_URL = '/noirc_abi_wasm_bg.wasm';
+// const ACVM_WASM_URL = '/acvm_js_bg.wasm'; // Replaced by Vite import
+// const NOIRC_ABI_WASM_URL = '/noirc_abi_wasm_bg.wasm'; // Replaced by Vite import
+
+// Import WASM URLs using Vite's ?url suffix for proper bundling
+import acvmWasm from '@noir-lang/acvm_js/web/acvm_js_bg.wasm?url';
+import noircWasm from '@noir-lang/noirc_abi/web/noirc_abi_wasm_bg.wasm?url';
 
 // Import compiled circuit - this will be added after compilation
 // For now, we'll use dynamic loading
@@ -64,7 +75,8 @@ export async function generateBRACUProof(
     rawEmail: string,
     options: ProverOptions = {}
 ): Promise<ProofResult> {
-    const { threads = 1, maxHeaderLength = 20000 } = options
+    const { threads = 1 } = options
+    const CIRCUIT_MAX_REMAINING_HEADER = 2560; // Max remaining header size in circuit
 
     if (!compiledCircuit) {
         throw new Error('Circuit not loaded. Call setCompiledCircuit() or loadCircuitFromUrl() first.')
@@ -76,83 +88,86 @@ export async function generateBRACUProof(
     try {
         console.log('⚡ Initializing Noir WASM...');
         await Promise.all([
-            initAcvm(fetch(ACVM_WASM_URL)),
-            initAbi(fetch(NOIRC_ABI_WASM_URL))
+            initAcvm({ module_or_path: fetch(acvmWasm) }),
+            initAbi({ module_or_path: fetch(noircWasm) })
         ]);
         console.log('✅ Noir WASM initialized');
     } catch (e) {
         console.warn('⚠️ WASM initialization warning (might be already initialized):', e);
     }
 
-
-    // Step 1: Parse email and generate circuit inputs using zkemail-nr
+    // Step 1: Parse email and extract full header
     console.log('📧 Parsing email and extracting DKIM data...')
     const emailInputs = await generateEmailVerifierInputs(rawEmail, {
-        maxHeaderLength: maxHeaderLength
+        maxHeaderLength: 32768 // Large enough for any email header
     })
 
-    // Validate header length doesn't exceed circuit capacity
-    const actualHeaderLength = emailInputs.emailHeaderLength || emailInputs.emailHeader?.length || 0;
-    if (actualHeaderLength > maxHeaderLength) {
-        throw new Error(`Email header length (${actualHeaderLength}) exceeds circuit maximum (${maxHeaderLength}). Try a shorter email or increase maxHeaderLength.`)
+    // Step 2: Compute partial hash using WASM
+    console.log('🔢 Computing partial SHA256 hash via WASM...')
+    const headerBytes = new Uint8Array(
+        (emailInputs.emailHeader || []).map((x: any) => Number(x))
+    );
+
+    let partialHashResult: PartialHashResult;
+    try {
+        // Try WASM first
+        const wasmAvailable = await isPartialHashAvailable();
+        if (wasmAvailable) {
+            partialHashResult = await computePartialHash(headerBytes, CIRCUIT_MAX_REMAINING_HEADER);
+            console.log(`   ✅ WASM partial hash: ${partialHashResult.prehashedLength} bytes pre-hashed, ${partialHashResult.remaining.length} bytes remaining`);
+        } else {
+            console.log('   ⚠️ WASM not available, using JavaScript fallback');
+            partialHashResult = computePartialHashFallback(headerBytes, CIRCUIT_MAX_REMAINING_HEADER);
+        }
+    } catch (error) {
+        console.warn('   ⚠️ Partial hash failed, using fallback:', error);
+        partialHashResult = computePartialHashFallback(headerBytes, CIRCUIT_MAX_REMAINING_HEADER);
     }
 
-    // Validate indices are within header bounds to prevent circuit overflow
-    const fromHeaderIndex = emailInputs.fromHeaderIndex || 0;
-    const fromHeaderLength = emailInputs.fromHeaderLength || 0;
-    const fromAddressIndex = emailInputs.fromAddressIndex || 0;
-    const fromAddressLength = emailInputs.fromAddressLength || 0;
+    // Step 3: Recalculate From header indices relative to remaining bytes
+    let fromHeaderIndex = emailInputs.fromHeaderIndex || 0;
+    let fromHeaderLength = emailInputs.fromHeaderLength || 0;
+    let fromAddressIndex = emailInputs.fromAddressIndex || 0;
+    let fromAddressLength = emailInputs.fromAddressLength || 0;
 
-    if (fromHeaderIndex + fromHeaderLength > actualHeaderLength) {
-        throw new Error(`From header bounds exceed header length: index=${fromHeaderIndex}, length=${fromHeaderLength}, header=${actualHeaderLength}`)
+    // Adjust indices for the offset from partial hash
+    const offset = partialHashResult.prehashedLength;
+    fromHeaderIndex = fromHeaderIndex - offset;
+    fromAddressIndex = fromAddressIndex - offset;
+
+    // Validate indices are within remaining header bounds
+    if (fromHeaderIndex < 0 || fromHeaderIndex >= partialHashResult.remaining.length) {
+        throw new Error(`From header index ${fromHeaderIndex} is out of bounds after partial hash adjustment`)
     }
-    if (fromAddressIndex + fromAddressLength > actualHeaderLength) {
-        throw new Error(`From address bounds exceed header length: index=${fromAddressIndex}, length=${fromAddressLength}, header=${actualHeaderLength}`)
+    if (fromAddressIndex < 0 || fromAddressIndex >= partialHashResult.remaining.length) {
+        throw new Error(`From address index ${fromAddressIndex} is out of bounds after partial hash adjustment`)
     }
 
-    // Step 2: Format inputs for the Noir circuit
-    const circuitInputs = formatCircuitInputs(emailInputs)
+    // Step 4: Format circuit inputs with new structure
+    console.log('📦 Formatting circuit inputs...')
+    const circuitInputs = formatCircuitInputsPartialHash(
+        partialHashResult,
+        emailInputs,
+        fromHeaderIndex,
+        fromHeaderLength,
+        fromAddressIndex,
+        fromAddressLength
+    );
 
     // Debug logging
     console.log('📊 Circuit Input Summary:');
-    console.log('  Header length:', circuitInputs.header.len);
+    console.log('  Partial hash state:', circuitInputs.partial_header_hash);
+    console.log('  Remaining header length:', circuitInputs.remaining_header.len);
+    console.log('  Total header length:', circuitInputs.total_header_length);
     console.log('  From header index:', circuitInputs.from_header_sequence.index);
-    console.log('  From header length:', circuitInputs.from_header_sequence.length);
     console.log('  From address index:', circuitInputs.from_address_sequence.index);
-    console.log('  From address length:', circuitInputs.from_address_sequence.length);
-    console.log('  Pubkey modulus limbs:', circuitInputs.pubkey.modulus.length);
-    console.log('  Signature limbs:', circuitInputs.signature.length);
 
-    // Step 3: Execute Noir circuit to generate witness
+    // Step 5: Execute Noir circuit
     console.log('⚡ Executing circuit...')
-    
-    // Debug: Show circuit input values before formatting
-    console.log('📋 Raw circuit inputs:')
-    console.log(`   header.len: ${actualHeaderLength}`)
-    console.log(`   from_header_sequence.index: ${emailInputs.fromHeaderIndex}`)
-    console.log(`   from_header_sequence.length: ${emailInputs.fromHeaderLength}`)
-    console.log(`   from_address_sequence.index: ${emailInputs.fromAddressIndex}`)
-    console.log(`   from_address_sequence.length: ${emailInputs.fromAddressLength}`)
-    
-    // Debug: Check if address length is valid for BRACU domain
-    const bracuDomainLen = 13; // g.bracu.ac.bd
-    const minLength = bracuDomainLen + 2; // 15 (1 char + @ + 13 char domain)
-    const addressLength = Number(emailInputs.fromAddressLength || 0);
-    
-    console.log(`   BRACU domain length: ${bracuDomainLen}`)
-    console.log(`   Minimum required length: ${minLength}`)
-    console.log(`   Actual address length: ${addressLength}`)
-    console.log(`   Is valid length: ${addressLength >= minLength}`)
-    
-    if (addressLength < minLength) {
-        console.error(`❌ Address too short for BRACU domain: ${addressLength} < ${minLength}`)
-        throw new Error(`Email address is too short to contain @g.bracu.ac.bd domain. Length: ${addressLength}, required: ${minLength}`)
-    }
-    
     const noir = new Noir(compiledCircuit)
     const { witness } = await noir.execute(circuitInputs)
 
-    // Step 4: Generate UltraPlonk proof
+    // Step 6: Generate UltraPlonk proof
     console.log('🔒 Generating UltraPlonk proof...')
     const backend = new UltraPlonkBackend(compiledCircuit.bytecode, { threads })
     const proofData = await backend.generateProof(witness)
@@ -177,9 +192,80 @@ export async function generateBRACUProof(
 }
 
 /**
- * Format email inputs for the bracu_verifier Noir circuit
+ * Format circuit inputs for the partial hash bracu_verifier circuit
  */
-function formatCircuitInputs(emailInputs: any): Record<string, any> {
+function formatCircuitInputsPartialHash(
+    partialHash: PartialHashResult,
+    emailInputs: any,
+    fromHeaderIndex: number,
+    fromHeaderLength: number,
+    fromAddressIndex: number,
+    fromAddressLength: number
+): Record<string, any> {
+    const TARGET_LIMBS = 18;
+    const MAX_REMAINING_HEADER = 2560;
+
+    // Helper to pad arrays
+    const padArray = (arr: any[], length: number, fillValue: string = "0") => {
+        const padded = [...arr];
+        while (padded.length < length) {
+            padded.push(fillValue);
+        }
+        return padded;
+    };
+
+    // Format remaining header as BoundedVec
+    const remainingStorage = Array.from(partialHash.remaining).map((b: number) => b.toString());
+    const paddedRemaining = padArray(remainingStorage, MAX_REMAINING_HEADER);
+
+    // Format RSA pubkey
+    let pubkeyModulus = emailInputs.pubkey || [];
+    let pubkeyRedc = emailInputs.pubkeyRedc || emailInputs.pubkey || [];
+
+    // Pad to 18 limbs if needed
+    pubkeyModulus = padArray(pubkeyModulus, TARGET_LIMBS);
+    pubkeyRedc = padArray(pubkeyRedc, TARGET_LIMBS);
+
+    // Format signature
+    const signature = padArray(emailInputs.signature || [], TARGET_LIMBS);
+
+    // Validate indices
+    if (fromAddressIndex <= 0) {
+        throw new Error(`Invalid fromAddressIndex: ${fromAddressIndex}. Must be > 0.`);
+    }
+    if (fromAddressLength < 15) {
+        throw new Error(`Email address too short: ${fromAddressLength} chars. BRACU emails require at least 15.`);
+    }
+
+    return {
+        partial_header_hash: Array.from(partialHash.state).map(n => n.toString()),
+        remaining_header: {
+            storage: paddedRemaining,
+            len: partialHash.remaining.length.toString()
+        },
+        total_header_length: partialHash.totalLength.toString(),
+        pubkey: {
+            modulus: pubkeyModulus,
+            redc: pubkeyRedc
+        },
+        signature: signature,
+        from_header_sequence: {
+            index: fromHeaderIndex.toString(),
+            length: fromHeaderLength.toString()
+        },
+        from_address_sequence: {
+            index: fromAddressIndex.toString(),
+            length: fromAddressLength.toString()
+        }
+    };
+}
+
+/**
+ * @deprecated Legacy format for old circuit without partial hash
+ * Kept for reference if needed for backward compatibility
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _formatCircuitInputsLegacy(emailInputs: any): Record<string, any> {
     console.log("Formatting circuit inputs with strict types... Input keys:", Object.keys(emailInputs));
 
     // Safety check
@@ -187,11 +273,17 @@ function formatCircuitInputs(emailInputs: any): Record<string, any> {
 
     // Note: email-parser.ts returns `emailHeader` as number[], so no mapping needed if typed correctly
     // But we act safely just in case.
-    const headerStorage = Array.isArray(emailInputs.emailHeader)
+    let headerStorage = Array.isArray(emailInputs.emailHeader)
         ? emailInputs.emailHeader.map((x: any) => Number(x))
         : [];
 
-    const headerLen = Number(emailInputs.emailHeaderLength || 0);
+    const headerLen = Math.min(Number(emailInputs.emailHeaderLength || 0), 2560);
+
+    // Truncate header to circuit maximum if it's longer
+    if (headerStorage.length > 2560) {
+        console.warn(`Header length ${headerStorage.length} exceeds circuit maximum 2560, truncating`);
+        headerStorage = headerStorage.slice(0, 2560);
+    }
 
     // Helper to pad arrays to 18 limbs
     const padArray = (arr: any[], length: number) => {
@@ -278,47 +370,47 @@ function formatCircuitInputs(emailInputs: any): Record<string, any> {
     }
 
     // Validate indices to prevent circuit overflow
-     const fromHeaderIndex = Number(emailInputs.fromHeaderIndex || 0)
-     const fromHeaderLength = Number(emailInputs.fromHeaderLength || 0)
-     const fromAddressIndex = Number(emailInputs.fromAddressIndex || 0)
-     let fromAddressLength = Number(emailInputs.fromAddressLength || 0)
- 
-     // CRITICAL: Workaround for circuit bug in parse_email_address
-     // The circuit has a subtraction underflow bug when address index is 0
-     // Ensure address index is never 0 to prevent circuit witness generation failure
-     if (fromAddressIndex === 0) {
-         throw new Error(`Invalid fromAddressIndex: ${fromAddressIndex}. Circuit bug: index cannot be 0 due to subtraction underflow.`)
-     }
-     
-     // Also ensure address length is valid for BRACU domain
-     const bracuDomainLen = 13; // g.bracu.ac.bd
-     const minLength = bracuDomainLen + 2; // 15 (1 char + @ + 13 char domain)
-     
-     if (fromAddressLength < minLength) {
-         console.warn(`⚠️ Address length ${fromAddressLength} too short for BRACU domain. Adjusting to ${minLength}`)
-         fromAddressLength = minLength; // Force minimum length
-     }
-     
-     // Bounds validation to prevent circuit overflow
-     if (fromHeaderIndex < 0 || fromHeaderIndex >= headerLen) {
-         throw new Error(`Invalid fromHeaderIndex: ${fromHeaderIndex} (header length: ${headerLen})`)
-     }
-     
-     if (fromHeaderLength <= 0 || fromHeaderIndex + fromHeaderLength > headerLen) {
-         throw new Error(`Invalid fromHeaderLength: ${fromHeaderLength} (index: ${fromHeaderIndex}, header length: ${headerLen})`)
-     }
-     
-     if (fromAddressIndex < 0 || fromAddressIndex >= headerLen) {
-         throw new Error(`Invalid fromAddressIndex: ${fromAddressIndex} (header length: ${headerLen})`)
-     }
-     
-     if (fromAddressLength <= 0 || fromAddressIndex + fromAddressLength > headerLen) {
-         throw new Error(`Invalid fromAddressLength: ${fromAddressLength} (index: ${fromAddressIndex}, header length: ${headerLen})`)
-     }
+    const fromHeaderIndex = Number(emailInputs.fromHeaderIndex || 0)
+    const fromHeaderLength = Number(emailInputs.fromHeaderLength || 0)
+    const fromAddressIndex = Number(emailInputs.fromAddressIndex || 0)
+    let fromAddressLength = Number(emailInputs.fromAddressLength || 0)
+
+    // CRITICAL: Workaround for circuit bug in parse_email_address
+    // The circuit has a subtraction underflow bug when address index is 0
+    // Ensure address index is never 0 to prevent circuit witness generation failure
+    if (fromAddressIndex === 0) {
+        throw new Error(`Invalid fromAddressIndex: ${fromAddressIndex}. Circuit bug: index cannot be 0 due to subtraction underflow.`)
+    }
+
+    // Also ensure address length is valid for BRACU domain
+    const bracuDomainLen = 13; // g.bracu.ac.bd
+    const minLength = bracuDomainLen + 2; // 15 (1 char + @ + 13 char domain)
+
+    if (fromAddressLength < minLength) {
+        console.warn(`⚠️ Address length ${fromAddressLength} too short for BRACU domain. Adjusting to ${minLength}`)
+        fromAddressLength = minLength; // Force minimum length
+    }
+
+    // Bounds validation to prevent circuit overflow
+    if (fromHeaderIndex < 0 || fromHeaderIndex >= headerLen) {
+        throw new Error(`Invalid fromHeaderIndex: ${fromHeaderIndex} (header length: ${headerLen})`)
+    }
+
+    if (fromHeaderLength <= 0 || fromHeaderIndex + fromHeaderLength > headerLen) {
+        throw new Error(`Invalid fromHeaderLength: ${fromHeaderLength} (index: ${fromHeaderIndex}, header length: ${headerLen})`)
+    }
+
+    if (fromAddressIndex < 0 || fromAddressIndex >= headerLen) {
+        throw new Error(`Invalid fromAddressIndex: ${fromAddressIndex} (header length: ${headerLen})`)
+    }
+
+    if (fromAddressLength <= 0 || fromAddressIndex + fromAddressLength > headerLen) {
+        throw new Error(`Invalid fromAddressLength: ${fromAddressLength} (index: ${fromAddressIndex}, header length: ${headerLen})`)
+    }
 
     return {
         header: {
-            storage: headerStorage,
+            storage: padArray(headerStorage, 2560),
             len: headerLen
         },
         pubkey: {
