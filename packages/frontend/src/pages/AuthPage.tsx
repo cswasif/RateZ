@@ -1,68 +1,229 @@
 import { useState } from 'react';
 import { useAuth } from '../auth/ZKAuthProvider';
+import { validateBRACUEmail, hasDKIMSignature } from '../lib/email-parser';
+
+type AuthMethod = 'manual' | 'file';
 
 export function AuthPage() {
     const { login, isProving, error } = useAuth();
+    const [authMethod, setAuthMethod] = useState<AuthMethod>('manual');
     const [rawEmail, setRawEmail] = useState('');
+    const [fileName, setFileName] = useState<string | null>(null);
+    const [localError, setLocalError] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
 
-    const handleLogin = () => {
-        if (!rawEmail) return;
+    const handleFileUpload = async (file: File) => {
+        setLocalError(null);
+
+        // Validate file type
+        if (!file.name.endsWith('.eml') && !file.type.includes('message')) {
+            setLocalError('Please upload a valid .eml email file');
+            return;
+        }
+
+        // Read file content locally in browser
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target?.result as string;
+
+            // Validate BRACU email
+            const validation = validateBRACUEmail(content);
+            if (!validation.valid) {
+                setLocalError(validation.error || 'Invalid BRACU email');
+                return;
+            }
+
+            // Check for DKIM signature
+            if (!hasDKIMSignature(content)) {
+                setLocalError('Email must have a valid DKIM signature');
+                return;
+            }
+
+            // Store email content and file name
+            setRawEmail(content);
+            setFileName(file.name);
+
+            // Auto-generate proof
+            login(content);
+        };
+
+        reader.onerror = () => {
+            setLocalError('Failed to read file. Please try again.');
+        };
+
+        reader.readAsText(file);
+    };
+
+    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            handleFileUpload(file);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            handleFileUpload(file);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleManualLogin = () => {
+        setLocalError(null);
+
+        if (!rawEmail.trim()) {
+            setLocalError('Please paste your email content');
+            return;
+        }
+
+        // Validate BRACU email
+        const validation = validateBRACUEmail(rawEmail);
+        if (!validation.valid) {
+            setLocalError(validation.error || 'Invalid BRACU email');
+            return;
+        }
+
+        // Check for DKIM signature
+        if (!hasDKIMSignature(rawEmail)) {
+            setLocalError('Email must have a valid DKIM signature');
+            return;
+        }
+
         login(rawEmail);
     };
 
-    return (
-        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-gray-800 rounded-lg shadow-xl p-6">
-                <h1 className="text-3xl font-bold mb-2">Student Login</h1>
-                <p className="text-gray-400 mb-6">Verify your @g.bracu.ac.bd email anonymously using Zero-Knowledge Proofs.</p>
+    const displayError = error || localError;
 
-                {error && (
-                    <div className="bg-red-900/50 border border-red-500 text-red-200 p-3 rounded mb-4">
-                        {error}
+    return (
+        <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-slate-950">
+            {/* Ambient Background Glow */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600/20 rounded-full blur-[120px] animate-float"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/20 rounded-full blur-[120px] animate-float" style={{ animationDelay: '2s' }}></div>
+            </div>
+
+            <div className="max-w-2xl w-full glass-card rounded-3xl p-8 border border-white/5 relative z-10 transition-all duration-500 shadow-2xl backdrop-blur-2xl bg-slate-900/40">
+                <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center p-4 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 mb-6 border border-white/5 shadow-inner">
+                        <span className="text-4xl filter drop-shadow-md">🔐</span>
+                    </div>
+                    <h1 className="text-3xl font-bold mb-2 text-white tracking-tight">
+                        Anonymous Student Login
+                    </h1>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                        Verify your <span className="font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">@g.bracu.ac.bd</span> email<br />anonymously using Zero-Knowledge proofs.
+                    </p>
+                </div>
+
+                {/* Privacy Notice */}
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-6 backdrop-blur-sm">
+                    <div className="flex items-start gap-3">
+                        <span className="text-emerald-400 text-xl">🔒</span>
+                        <div className="flex-1">
+                            <h3 className="text-emerald-300 font-semibold text-sm mb-1">Privacy-First Authentication</h3>
+                            <p className="text-emerald-200/70 text-xs leading-relaxed">
+                                Your email content is processed <b>locally in your browser</b>. Google never knows you're submitting a review.
+                                No OAuth, no tracking, complete anonymity.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {displayError && (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-200 p-4 rounded-xl mb-6 backdrop-blur-sm shadow-sm flex items-start gap-3">
+                        <span className="text-red-400 text-lg">⚠️</span>
+                        <span className="text-sm font-medium pt-0.5">{displayError}</span>
                     </div>
                 )}
 
-                <div className="space-y-4">
-                    <div className="bg-gray-700 p-4 rounded text-sm text-gray-300">
-                        <h3 className="font-bold text-white mb-2">Instructions:</h3>
-                        <ol className="list-decimal pl-4 space-y-1">
-                            <li>Log in to your <b>g.bracu.ac.bd</b> Gmail.</li>
-                            <li>Send an email to yourself with subject: <b>LOGIN</b></li>
-                            <li>Open the email you received.</li>
-                            <li>Click "Three Dots" ⋮ ({'>'}) "Show Original".</li>
-                            <li>Click "Copy to clipboard" (or copy full text).</li>
-                            <li>Paste it below.</li>
-                        </ol>
+
+
+                {/* Manual Paste Method (only mode) */}
+                    <div className="space-y-4 animate-fade-in">
+                        <div className="bg-slate-800/50 p-5 rounded-xl border border-white/5 text-sm text-slate-300 shadow-sm backdrop-blur-sm">
+                            <h3 className="font-bold text-white mb-3 flex items-center gap-2">
+                                <span className="text-lg">📋</span> How to get your email content
+                            </h3>
+                            <ol className="list-decimal pl-4 space-y-2 text-xs text-slate-400 marker:text-slate-600">
+                                <li>Open any email in your <b className="text-slate-200">g.bracu.ac.bd</b> Gmail</li>
+                                <li>Click <b className="text-slate-200">Three Dots</b> ⋮ → <b className="text-slate-200">"Show Original"</b></li>
+                                <li>Click <b className="text-slate-200">"Copy to Clipboard"</b> or select all and copy</li>
+                                <li>Paste the email content below</li>
+                            </ol>
+                            <p className="mt-3 text-xs text-slate-500 flex items-center gap-1.5">
+                                <span>💡</span>
+                                <span>On mobile: Long-press the email content to select and copy</span>
+                            </p>
+                        </div>
+
+                        <textarea
+                            className="w-full h-40 bg-black/20 border border-white/10 rounded-xl p-4 text-[11px] font-mono text-slate-300 focus:outline-none focus:border-indigo-500/50 focus:bg-black/30 transition-all placeholder:text-slate-700 resize-none shadow-inner"
+                            placeholder="Delivered-To: your.name@g.bracu.ac.bd
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=g-bracu-ac-bd.20230601.gappssmtp.com; s=20230601;
+        ...
+
+Paste your complete email content here..."
+                            value={rawEmail}
+                            onChange={(e) => setRawEmail(e.target.value)}
+                            disabled={isProving}
+                        />
+
+                        <button
+                            onClick={handleManualLogin}
+                            disabled={isProving || !rawEmail.trim()}
+                            className={`w-full py-3.5 rounded-xl font-bold text-base transition-all shadow-lg ${isProving || !rawEmail.trim()
+                                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:scale-[1.01] active:scale-[0.98]'
+                                } flex items-center justify-center gap-2`}
+                        >
+                            {isProving ? (
+                                <>
+                                    <span className="w-4 h-4 border-2 border-slate-500/30 border-t-slate-500 rounded-full animate-spin"></span>
+                                    <span>Generating Proof...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>🛡️</span>
+                                    <span>Verify & Login Anonymously</span>
+                                </>
+                            )}
+                        </button>
                     </div>
 
-                    <textarea
-                        className="w-full h-40 bg-gray-900 border border-gray-700 rounded p-3 text-xs font-mono text-gray-300 focus:outline-none focus:border-blue-500"
-                        placeholder="Delivered-To: your.name@g.bracu.ac.bd..."
-                        value={rawEmail}
-                        onChange={(e) => setRawEmail(e.target.value)}
-                    />
 
-                    <button
-                        onClick={handleLogin}
-                        disabled={isProving || !rawEmail}
-                        className={`w-full py-3 rounded font-bold text-lg transition-colors ${isProving
-                                ? 'bg-blue-800 cursor-wait'
-                                : 'bg-blue-600 hover:bg-blue-500'
-                            }`}
-                    >
-                        {isProving ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <span className="animate-spin text-xl">⚙️</span> Generating Proof...
-                            </span>
-                        ) : (
-                            'Verify & Login'
-                        )}
-                    </button>
+                {/* Proving Status */}
+                {isProving && (
+                    <div className="mt-6 text-center py-6 animate-in fade-in zoom-in duration-300 bg-black/20 rounded-xl border border-white/5">
+                        <div className="relative inline-flex items-center justify-center mb-4">
+                            <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                            <span className="absolute text-xl">⚙️</span>
+                        </div>
+                        <p className="text-white font-medium">Generating Zero-Knowledge Proof...</p>
+                        <p className="text-xs text-slate-500 mt-2 max-w-[280px] mx-auto">
+                            This happens locally on your device. Your email content never leaves your browser.
+                        </p>
+                    </div>
+                )}
 
-                    <p className="text-xs text-center text-gray-500 mt-2">
-                        <b>Privacy Note:</b> Your email content is processed locally.
-                        Only a mathematical proof is sent to the server.
-                        Your identity is never revealed.
+                {/* Footer Privacy Info */}
+                <div className="mt-8 pt-6 border-t border-white/5 text-center">
+                    <p className="text-[10px] text-slate-500 flex items-center justify-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity cursor-help">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        <span>Zero Google tracking · Local proof generation · True anonymity</span>
                     </p>
                 </div>
             </div>
