@@ -471,7 +471,7 @@ fn bigint_to_limbs(value: &BigUint, num_limbs: usize, limb_bits: usize) -> Vec<S
 }
 
 /// Calculate REDC parameter for Montgomery multiplication
-fn calculate_redc_param(modulus: &BigUint, num_limbs: usize, limb_bits: usize) -> Vec<String> {
+fn calculate_redc_param(_modulus: &BigUint, num_limbs: usize, _limb_bits: usize) -> Vec<String> {
     // redc = (-N^-1) mod R, where R = 2^(num_limbs * limb_bits)
     // For stub, just return zeros (in production, calculate properly)
     vec!["0".to_string(); num_limbs]
