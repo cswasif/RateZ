@@ -23,6 +23,11 @@ jobs:
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
     
+    - name: Fetch dependencies
+      run: |
+        cd packages/zk-wasm
+        cargo fetch
+    
     - name: Build WASM module
       run: |
         cd packages/zk-wasm
