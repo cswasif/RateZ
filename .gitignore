@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+target/
+*.tsbuildinfo
+
+# Testing
+coverage/
+*.lcov
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Noir/ZK artifacts (keep compiled circuits in public/)
+packages/zkemail-noir/**/target/
+!packages/frontend/public/circuits/
+
+# Rust/WASM build artifacts
+packages/zk-wasm/target/
+packages/zk-wasm/pkg/
+*.wasm
+!packages/frontend/public/*.wasm
+!packages/frontend/src/lib/zk-wasm-pkg/*.wasm
+
+# Test files (keep only essential ones)
+test-*.js
+test-*.html
+wasm-test.html
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Package manager locks (optional - some teams keep these)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
