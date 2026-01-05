@@ -406,16 +406,16 @@ fn extract_dkim_signature(email: &str) -> Result<DKIMSignature, JsValue> {
         .map_err(|e| JsValue::from_str(&format!("Regex error: {}", e)))?;
     
     let captures = dkim_regex.captures(email)
-        .ok_or_else(|| JsValue::from_str("No DKIM-Signature header found"))?;
+        .ok_or_else(|| JsValue::from_str("No DKIM-Signature header found via regex"))?;
     
     let dkim_header = captures.get(1)
-        .ok_or_else(|| JsValue::from_str("Failed to extract DKIM header"))?
+        .ok_or_else(|| JsValue::from_str("Failed to extract DKIM header capture"))?
         .as_str()
         .replace("\r\n", "")
         .replace("\n", "");
 
     // Extract b= (signature)
-    let b_regex = Regex::new(r"b=([A-Za-z0-9+/=]+)")
+    let b_regex = Regex::new(r"b=([A-Za-z0-9+/=\s]+)")
         .map_err(|e| JsValue::from_str(&format!("Regex error: {}", e)))?;
     let b = b_regex.captures(&dkim_header)
         .and_then(|c| c.get(1))
@@ -444,7 +444,9 @@ fn extract_dkim_signature(email: &str) -> Result<DKIMSignature, JsValue> {
 /// Parse base64 to BigInt
 fn parse_base64_to_bigint(b64: &str) -> Option<BigUint> {
     use base64::{Engine as _, engine::general_purpose};
-    let bytes = general_purpose::STANDARD.decode(b64).ok()?;
+    // Remove any whitespace which might be present from header folding
+    let clean_b64: String = b64.chars().filter(|c| !c.is_whitespace()).collect();
+    let bytes = general_purpose::STANDARD.decode(clean_b64).ok()?;
     Some(BigUint::from_bytes_be(&bytes))
 }
 
