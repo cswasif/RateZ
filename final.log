@@ -1,0 +1,639 @@
+react-dom_client.js?v=34972da2:32132 Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+test-zk-prover.ts:86 🚀 ZK Prover test module loaded. Call window.testZKProver() to run tests.
+manual-test.ts:55 📝 Manual ZK Test script loaded. Call runManualZKTest() to run the test.
+ZKAuthProvider.tsx:28 📦 Pre-loading ZK circuit...
+ZKAuthProvider.tsx:28 📦 Pre-loading ZK circuit...
+zk-prover.ts:90 📋 Loading circuit compiled with Noir version: 1.0.0-beta.5+c651df6e2bf5db3966aa0c95abea2fc4c69d4513
+zk-prover.ts:97 ⚠️ Version mismatch detected:
+loadCircuitFromUrl @ zk-prover.ts:97
+await in loadCircuitFromUrl
+loadCircuit @ ZKAuthProvider.tsx:29
+(anonymous) @ ZKAuthProvider.tsx:37
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30596
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+commitHookEffectListMount @ react-dom_client.js?v=34972da2:21440
+commitHookPassiveMountEffects @ react-dom_client.js?v=34972da2:21494
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23069
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23062
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23230
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23095
+flushPassiveEffects @ react-dom_client.js?v=34972da2:25179
+(anonymous) @ react-dom_client.js?v=34972da2:24805
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AuthProvider>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:29
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+zk-prover.ts:98    Circuit version: 1.0.0-beta.5
+loadCircuitFromUrl @ zk-prover.ts:98
+await in loadCircuitFromUrl
+loadCircuit @ ZKAuthProvider.tsx:29
+(anonymous) @ ZKAuthProvider.tsx:37
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30596
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+commitHookEffectListMount @ react-dom_client.js?v=34972da2:21440
+commitHookPassiveMountEffects @ react-dom_client.js?v=34972da2:21494
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23069
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23062
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23230
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23095
+flushPassiveEffects @ react-dom_client.js?v=34972da2:25179
+(anonymous) @ react-dom_client.js?v=34972da2:24805
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AuthProvider>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:29
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+zk-prover.ts:99    Runtime version: 1.0.0-beta.6
+loadCircuitFromUrl @ zk-prover.ts:99
+await in loadCircuitFromUrl
+loadCircuit @ ZKAuthProvider.tsx:29
+(anonymous) @ ZKAuthProvider.tsx:37
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30596
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+commitHookEffectListMount @ react-dom_client.js?v=34972da2:21440
+commitHookPassiveMountEffects @ react-dom_client.js?v=34972da2:21494
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23069
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23062
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23230
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23095
+flushPassiveEffects @ react-dom_client.js?v=34972da2:25179
+(anonymous) @ react-dom_client.js?v=34972da2:24805
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AuthProvider>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:29
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+zk-prover.ts:100    This may cause deserialization issues. Attempting compatibility mode...
+loadCircuitFromUrl @ zk-prover.ts:100
+await in loadCircuitFromUrl
+loadCircuit @ ZKAuthProvider.tsx:29
+(anonymous) @ ZKAuthProvider.tsx:37
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30596
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+commitHookEffectListMount @ react-dom_client.js?v=34972da2:21440
+commitHookPassiveMountEffects @ react-dom_client.js?v=34972da2:21494
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23069
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23062
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23230
+recursivelyTraversePassiveMountEffects @ react-dom_client.js?v=34972da2:23039
+commitPassiveMountOnFiber @ react-dom_client.js?v=34972da2:23095
+flushPassiveEffects @ react-dom_client.js?v=34972da2:25179
+(anonymous) @ react-dom_client.js?v=34972da2:24805
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AuthProvider>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:29
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+zk-prover.ts:104 🔄 Attempting beta.5 to beta.6 compatibility conversion...
+ZKAuthProvider.tsx:31 ✅ Circuit loaded successfully
+zk-prover.ts:90 📋 Loading circuit compiled with Noir version: 1.0.0-beta.5+c651df6e2bf5db3966aa0c95abea2fc4c69d4513
+zk-prover.ts:97 ⚠️ Version mismatch detected:
+loadCircuitFromUrl @ zk-prover.ts:97
+await in loadCircuitFromUrl
+loadCircuit @ ZKAuthProvider.tsx:29
+(anonymous) @ ZKAuthProvider.tsx:37
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30596
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+commitHookEffectListMount @ react-dom_client.js?v=34972da2:21440
+commitHookPassiveMountEffects @ react-dom_client.js?v=34972da2:21494
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23302
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=34972da2:23269
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23294
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=34972da2:23269
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23346
+doubleInvokeEffectsOnFiber @ react-dom_client.js?v=34972da2:25368
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom_client.js?v=34972da2:25341
+commitDoubleInvokeEffectsInDEV @ react-dom_client.js?v=34972da2:25376
+flushPassiveEffects @ react-dom_client.js?v=34972da2:25186
+(anonymous) @ react-dom_client.js?v=34972da2:24805
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AuthProvider>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:29
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+zk-prover.ts:98    Circuit version: 1.0.0-beta.5
+loadCircuitFromUrl @ zk-prover.ts:98
+await in loadCircuitFromUrl
+loadCircuit @ ZKAuthProvider.tsx:29
+(anonymous) @ ZKAuthProvider.tsx:37
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30596
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+commitHookEffectListMount @ react-dom_client.js?v=34972da2:21440
+commitHookPassiveMountEffects @ react-dom_client.js?v=34972da2:21494
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23302
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=34972da2:23269
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23294
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=34972da2:23269
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23346
+doubleInvokeEffectsOnFiber @ react-dom_client.js?v=34972da2:25368
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom_client.js?v=34972da2:25341
+commitDoubleInvokeEffectsInDEV @ react-dom_client.js?v=34972da2:25376
+flushPassiveEffects @ react-dom_client.js?v=34972da2:25186
+(anonymous) @ react-dom_client.js?v=34972da2:24805
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AuthProvider>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:29
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+zk-prover.ts:99    Runtime version: 1.0.0-beta.6
+loadCircuitFromUrl @ zk-prover.ts:99
+await in loadCircuitFromUrl
+loadCircuit @ ZKAuthProvider.tsx:29
+(anonymous) @ ZKAuthProvider.tsx:37
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30596
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+commitHookEffectListMount @ react-dom_client.js?v=34972da2:21440
+commitHookPassiveMountEffects @ react-dom_client.js?v=34972da2:21494
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23302
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=34972da2:23269
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23294
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=34972da2:23269
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23346
+doubleInvokeEffectsOnFiber @ react-dom_client.js?v=34972da2:25368
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom_client.js?v=34972da2:25341
+commitDoubleInvokeEffectsInDEV @ react-dom_client.js?v=34972da2:25376
+flushPassiveEffects @ react-dom_client.js?v=34972da2:25186
+(anonymous) @ react-dom_client.js?v=34972da2:24805
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AuthProvider>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:29
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+zk-prover.ts:100    This may cause deserialization issues. Attempting compatibility mode...
+loadCircuitFromUrl @ zk-prover.ts:100
+await in loadCircuitFromUrl
+loadCircuit @ ZKAuthProvider.tsx:29
+(anonymous) @ ZKAuthProvider.tsx:37
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30596
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+commitHookEffectListMount @ react-dom_client.js?v=34972da2:21440
+commitHookPassiveMountEffects @ react-dom_client.js?v=34972da2:21494
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23302
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=34972da2:23269
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23294
+recursivelyTraverseReconnectPassiveEffects @ react-dom_client.js?v=34972da2:23269
+reconnectPassiveEffects @ react-dom_client.js?v=34972da2:23346
+doubleInvokeEffectsOnFiber @ react-dom_client.js?v=34972da2:25368
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+recursivelyTraverseAndDoubleInvokeEffectsInDEV @ react-dom_client.js?v=34972da2:25341
+commitDoubleInvokeEffectsInDEV @ react-dom_client.js?v=34972da2:25376
+flushPassiveEffects @ react-dom_client.js?v=34972da2:25186
+(anonymous) @ react-dom_client.js?v=34972da2:24805
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AuthProvider>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:29
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+zk-prover.ts:104 🔄 Attempting beta.5 to beta.6 compatibility conversion...
+ZKAuthProvider.tsx:31 ✅ Circuit loaded successfully
+ZKAuthProvider.tsx:60 Starting login process...
+ZKAuthProvider.tsx:63 Generating proof with Noir...
+zk-prover.ts:132 🔐 Generating ZK proof for BRACU email...
+zk-prover.ts:136 ⚡ Initializing Noir WASM...
+zk-prover.ts:141 ✅ Noir WASM initialized
+zk-prover.ts:147 📧 Parsing email for basic validation...
+email-parser.ts:18 Skipping @zk-email/zkemail-nr in browser environment due to Node.js dependencies
+loadZkEmailGenerate @ email-parser.ts:18
+generateEmailVerifierInputs @ email-parser.ts:149
+generateBRACUProof @ zk-prover.ts:148
+await in generateBRACUProof
+login @ ZKAuthProvider.tsx:64
+reader.onload @ AuthPage.tsx:47
+FileReader
+handleFileUpload @ AuthPage.tsx:54
+handleFileInputChange @ AuthPage.tsx:60
+executeDispatch @ react-dom_client.js?v=34972da2:25651
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+processDispatchQueue @ react-dom_client.js?v=34972da2:25687
+(anonymous) @ react-dom_client.js?v=34972da2:26100
+batchedUpdates$1 @ react-dom_client.js?v=34972da2:14655
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=34972da2:25792
+dispatchEvent @ react-dom_client.js?v=34972da2:28813
+dispatchDiscreteEvent @ react-dom_client.js?v=34972da2:28794
+<input>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+AuthPage @ AuthPage.tsx:285
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performSyncWorkOnRoot @ react-dom_client.js?v=34972da2:25546
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=34972da2:25443
+processRootScheduleInMicrotask @ react-dom_client.js?v=34972da2:25466
+(anonymous) @ react-dom_client.js?v=34972da2:25560
+<AuthPage>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+AppContent @ App.tsx:17
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AppContent>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:31
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+email-parser.ts:36 Using browser-compatible WASM email parser...
+zk-wasm.ts:233 🔍 Found DKIM Selector: google, Domain: g.bracu.ac.bd
+zk-wasm.ts:241 🔑 Fetched Real Public Key from DNS
+zk-wasm.ts:246 🛠️ WASM Generated PubKey Inputs: PubkeyResult {__wbg_ptr: 1590632}
+zk-wasm.ts:251 ✅ REDC parameters look valid (non-zero).
+email-parser.ts:45 ✅ WASM DKIM parsing successful!
+zk-prover.ts:160 🔑 Preserved real DKIM data from WASM parsing
+zk-prover.ts:163 🔧 Preprocessing email headers for circuit constraints...
+zk-prover.ts:167    Original header size: 12447 bytes
+email-preprocessor.ts:58 📊 Header preprocessing results:
+email-preprocessor.ts:59    Original size: 12447 bytes
+email-preprocessor.ts:60    New size: 149 bytes
+email-preprocessor.ts:61    Savings: 12298 bytes (99%)
+zk-prover.ts:171    Preprocessed header size: 149 bytes
+zk-prover.ts:184 📧 Finding From header indices in preprocessed header...
+email-parser.ts:363 📧 Generating circuit inputs with preprocessed header...
+email-parser.ts:364    Preprocessed header size: 149 bytes
+email-parser.ts:373    Found From header at index 2, length 34
+email-parser.ts:374    Found From address at index 7, length 27
+email-parser.ts:422 ⚠️  Using fallback DKIM extraction - implement proper parsing for production
+extractDKIMInfo @ email-parser.ts:422
+generateEmailVerifierInputsWithPreprocessedHeader @ email-parser.ts:386
+generateBRACUProof @ zk-prover.ts:185
+await in generateBRACUProof
+login @ ZKAuthProvider.tsx:64
+reader.onload @ AuthPage.tsx:47
+FileReader
+handleFileUpload @ AuthPage.tsx:54
+handleFileInputChange @ AuthPage.tsx:60
+executeDispatch @ react-dom_client.js?v=34972da2:25651
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+processDispatchQueue @ react-dom_client.js?v=34972da2:25687
+(anonymous) @ react-dom_client.js?v=34972da2:26100
+batchedUpdates$1 @ react-dom_client.js?v=34972da2:14655
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=34972da2:25792
+dispatchEvent @ react-dom_client.js?v=34972da2:28813
+dispatchDiscreteEvent @ react-dom_client.js?v=34972da2:28794
+<input>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+AuthPage @ AuthPage.tsx:285
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performSyncWorkOnRoot @ react-dom_client.js?v=34972da2:25546
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=34972da2:25443
+processRootScheduleInMicrotask @ react-dom_client.js?v=34972da2:25466
+(anonymous) @ react-dom_client.js?v=34972da2:25560
+<AuthPage>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+AppContent @ App.tsx:17
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AppContent>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:31
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+zk-prover.ts:193 ✅ Using real DKIM data (not dummy values)
+zk-prover.ts:196 🔢 Computing partial SHA256 hash via WASM...
+zk-prover.ts:205    ✅ WASM partial hash: 0 bytes pre-hashed, 149 bytes remaining
+zk-prover.ts:222 📍 Original indices - Header: 2, Address: 7
+zk-prover.ts:223 📊 Partial hash result - Prehashed: 0, Remaining: 149
+zk-prover.ts:230 🔧 Adjusted indices - Header: 2, Address: 7
+zk-prover.ts:249 📦 Formatting circuit inputs...
+zk-prover.ts:260 📊 Circuit Input Summary:
+zk-prover.ts:261   Partial hash state: (8) ['1779033703', '3144134277', '1013904242', '2773480762', '1359893119', '2600822924', '528734635', '1541459225']
+zk-prover.ts:262   Remaining header length: 149
+zk-prover.ts:263   Remaining header storage array length: 16384
+zk-prover.ts:264   Total header length: 149
+zk-prover.ts:265   From header index: 2
+zk-prover.ts:266   From header length: 34
+zk-prover.ts:267   From address index: 7
+zk-prover.ts:268   From address length: 27
+zk-prover.ts:269   Pubkey modulus limbs: 18
+zk-prover.ts:270   Signature limbs: 18
+zk-prover.ts:272   Header first 50 bytes: 13,10,102,114,111,109,58,98,114,97,99,117,45,115,116,117,100,101,110,116,64,103,46,98,114,97,99,117,46,97,99,46,98,100,32,32,13,10,68,97,116,101,58,32,77,111,110,44,32,53
+zk-prover.ts:275 ⚡ Executing circuit...
+zk-prover.ts:284 ❌ Circuit execution failed: Error: Circuit execution failed: attempt to subtract with overflow
+    at imports.wbg.__wbg_constructor_057bae5a20622f39 (chunk-DCLMHZQZ.js?v=34972da2:440:17)
+    at acvm_js_bg.wasm:0xd6af6
+    at acvm_js_bg.wasm:0x4ae82
+    at acvm_js_bg.wasm:0xc8d00
+    at acvm_js_bg.wasm:0xd34b6
+    at acvm_js_bg.wasm:0xad6eb
+    at acvm_js_bg.wasm:0xf4b8b
+    at acvm_js_bg.wasm:0x14fc3e
+    at acvm_js_bg.wasm:0x15325f
+    at __wbg_adapter_30 (chunk-DCLMHZQZ.js?v=34972da2:386:8)
+generateBRACUProof @ zk-prover.ts:284
+await in generateBRACUProof
+login @ ZKAuthProvider.tsx:64
+reader.onload @ AuthPage.tsx:47
+FileReader
+handleFileUpload @ AuthPage.tsx:54
+handleFileInputChange @ AuthPage.tsx:60
+executeDispatch @ react-dom_client.js?v=34972da2:25651
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+processDispatchQueue @ react-dom_client.js?v=34972da2:25687
+(anonymous) @ react-dom_client.js?v=34972da2:26100
+batchedUpdates$1 @ react-dom_client.js?v=34972da2:14655
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=34972da2:25792
+dispatchEvent @ react-dom_client.js?v=34972da2:28813
+dispatchDiscreteEvent @ react-dom_client.js?v=34972da2:28794
+<input>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+AuthPage @ AuthPage.tsx:285
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performSyncWorkOnRoot @ react-dom_client.js?v=34972da2:25546
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=34972da2:25443
+processRootScheduleInMicrotask @ react-dom_client.js?v=34972da2:25466
+(anonymous) @ react-dom_client.js?v=34972da2:25560
+<AuthPage>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+AppContent @ App.tsx:17
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AppContent>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:31
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8
+ZKAuthProvider.tsx:91 Login failed: Error: Circuit execution failed: Circuit execution failed: attempt to subtract with overflow
+    at generateBRACUProof (zk-prover.ts:310:15)
+    at async login (ZKAuthProvider.tsx:64:28)
+login @ ZKAuthProvider.tsx:91
+await in login
+reader.onload @ AuthPage.tsx:47
+FileReader
+handleFileUpload @ AuthPage.tsx:54
+handleFileInputChange @ AuthPage.tsx:60
+executeDispatch @ react-dom_client.js?v=34972da2:25651
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+processDispatchQueue @ react-dom_client.js?v=34972da2:25687
+(anonymous) @ react-dom_client.js?v=34972da2:26100
+batchedUpdates$1 @ react-dom_client.js?v=34972da2:14655
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=34972da2:25792
+dispatchEvent @ react-dom_client.js?v=34972da2:28813
+dispatchDiscreteEvent @ react-dom_client.js?v=34972da2:28794
+<input>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+AuthPage @ AuthPage.tsx:285
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performSyncWorkOnRoot @ react-dom_client.js?v=34972da2:25546
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=34972da2:25443
+processRootScheduleInMicrotask @ react-dom_client.js?v=34972da2:25466
+(anonymous) @ react-dom_client.js?v=34972da2:25560
+<AuthPage>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+AppContent @ App.tsx:17
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<AppContent>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+App @ App.tsx:31
+react_stack_bottom_frame @ react-dom_client.js?v=34972da2:30538
+renderWithHooksAgain @ react-dom_client.js?v=34972da2:17758
+renderWithHooks @ react-dom_client.js?v=34972da2:17694
+updateFunctionComponent @ react-dom_client.js?v=34972da2:19504
+beginWork @ react-dom_client.js?v=34972da2:20554
+runWithFiberInDEV @ react-dom_client.js?v=34972da2:13026
+performUnitOfWork @ react-dom_client.js?v=34972da2:24590
+workLoopSync @ react-dom_client.js?v=34972da2:24453
+renderRootSync @ react-dom_client.js?v=34972da2:24437
+performWorkOnRoot @ react-dom_client.js?v=34972da2:23795
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=34972da2:25534
+performWorkUntilDeadline @ react-dom_client.js?v=34972da2:321
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=34972da2:269
+(anonymous) @ main.tsx:8

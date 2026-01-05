@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM Module Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 WASM Module Test</h1>
+    <p>Testing the zk-wasm module for BRACU email verification</p>
+    
+    <button onclick="runTest()">Run WASM Test</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="status"></div>
+    <div id="results"></div>
+
+    <script type="module">
+        import { testWASMModule } from './packages/frontend/src/lib/test-wasm.ts';
+        
+        window.runTest = async function() {
+            const statusEl = document.getElementById('status');
+            const resultsEl = document.getElementById('results');
+            
+            statusEl.innerHTML = '<p class="info">🔄 Running WASM test...</p>';
+            
+            try {
+                const result = await testWASMModule();
+                
+                if (result.success) {
+                    statusEl.innerHTML = '<p class="success">✅ WASM test completed successfully!</p>';
+                    resultsEl.innerHTML = `
+                        <div class="result">
+                            <h3>Test Results:</h3>
+                            <p><strong>Module Loaded:</strong> ${result.moduleLoaded ? '✅' : '❌'}</p>
+                            <p><strong>Function Available:</strong> ${result.functionAvailable ? '✅' : '❌'}</p>
+                            <p><strong>Partial Hash State:</strong> [${result.result.state.join(', ')}]</p>
+                            <p><strong>Remaining Bytes:</strong> ${result.result.remaining.length}</p>
+                            <p><strong>Total Length:</strong> ${result.result.total_length}</p>
+                            <p><strong>Prehashed Length:</strong> ${result.result.prehashed_length}</p>
+                        </div>
+                    `;
+                } else {
+                    statusEl.innerHTML = '<p class="error">❌ WASM test failed!</p>';
+                    resultsEl.innerHTML = `<div class="result"><p><strong>Error:</strong> ${result.error}</p></div>`;
+                }
+            } catch (error) {
+                statusEl.innerHTML = '<p class="error">❌ Unexpected error!</p>';
+                resultsEl.innerHTML = `<div class="result"><p><strong>Error:</strong> ${error instanceof Error ? error.message : String(error)}</p></div>`;
+                console.error('Test error:', error);
+            }
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('status').innerHTML = '';
+            document.getElementById('results').innerHTML = '';
+        };
+        
+        // Auto-run test on page load
+        window.addEventListener('load', () => {
+            document.getElementById('status').innerHTML = '<p class="info">📦 WASM module loaded. Click "Run WASM Test" to test functionality.</p>';
+        });
+    </script>
+</body>
+</html>
