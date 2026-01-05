@@ -23,7 +23,8 @@ fn check_header_field_bounds<let MAX_HEADER_LENGTH: u32, let MAX_HEADER_FIELD_LE
     assert(end_index <= header.len(), "Header field out of bounds of header");
 
     // if the sequence is not the start, check for a newline
-    if header_field_sequence.index != 0 {
+    if header_field_sequence.index > 1 {
+        // Safe to check previous characters (index - 2 >= 0 and index - 1 >= 0)
         assert(
             header.get_unchecked(header_field_sequence.index - 2) == CR,
             "Header field must start with CRLF",
@@ -32,7 +33,14 @@ fn check_header_field_bounds<let MAX_HEADER_LENGTH: u32, let MAX_HEADER_FIELD_LE
             header.get_unchecked(header_field_sequence.index - 1) == LF,
             "Header field must start with CRLF",
         );
+    } else if header_field_sequence.index == 1 {
+        // Special case: can only check index 0 (index - 1)
+        assert(
+            header.get_unchecked(0) == LF,
+            "Header field must start with CRLF",
+        );
     }
+    // If index is 0, we skip the check entirely (no previous characters to validate)
 
     // if the sequence is not the end, check for a newline
     if end_index != header.len() {

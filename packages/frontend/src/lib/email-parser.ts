@@ -63,9 +63,13 @@ export async function generateEmailVerifierInputs(
   const { headerIndex, headerLength, addressIndex, addressLength } =
     findFromIndices(headerString, fromAddress)
 
+  // Use our calculated header length instead of zkInputs.header.len to ensure consistency
+  // This prevents circuit overflow when indices don't match the header length
+  const calculatedHeaderLength = headerBytes.length
+
   return {
     emailHeader: headerBytes,
-    emailHeaderLength: parseInt(zkInputs.header.len),
+    emailHeaderLength: calculatedHeaderLength,
     pubkey: zkInputs.pubkey.modulus,
     pubkeyRedc: zkInputs.pubkey.redc,
     signature: zkInputs.signature,
@@ -109,6 +113,15 @@ function findFromIndices(
   headerString: string,
   emailAddress: string
 ): { headerIndex: number; headerLength: number; addressIndex: number; addressLength: number } {
+  // Safety bounds checking
+  if (!headerString || !emailAddress) {
+    throw new Error('Invalid parameters: headerString and emailAddress are required')
+  }
+  
+  if (headerString.length === 0) {
+    throw new Error('Empty header string')
+  }
+
   // Find "from:" in header (case-insensitive search, but we need exact position)
   const fromPattern = /\r?\nfrom:/i
   const fromMatch = headerString.match(fromPattern)
@@ -127,6 +140,15 @@ function findFromIndices(
     throw new Error('Could not find "From:" header in email')
   }
 
+  // Bounds validation
+  if (headerIndex < 0 || headerIndex >= headerString.length) {
+    throw new Error(`Invalid header index: ${headerIndex} (string length: ${headerString.length})`)
+  }
+  
+  if (headerLength <= 0 || headerIndex + headerLength > headerString.length) {
+    throw new Error(`Invalid header length: ${headerLength} (headerIndex: ${headerIndex}, string length: ${headerString.length})`)
+  }
+
   // Extract just the From header content for searching
   const fromHeaderContent = headerString.slice(headerIndex, headerIndex + headerLength)
 
@@ -141,6 +163,15 @@ function findFromIndices(
 
   // Calculate absolute position in the full header string
   const addressPos = headerIndex + addressPosInFromHeader
+
+  // Final bounds validation for address position
+  if (addressPos < 0 || addressPos >= headerString.length) {
+    throw new Error(`Invalid address position: ${addressPos} (string length: ${headerString.length})`)
+  }
+  
+  if (addressPos + emailAddress.length > headerString.length) {
+    throw new Error(`Address extends beyond header bounds: position ${addressPos}, length ${emailAddress.length}, header length ${headerString.length}`)
+  }
 
   // Validate: address must be at least 15 chars for BRACU domain (x@g.bracu.ac.bd)
   if (emailAddress.length < 15) {

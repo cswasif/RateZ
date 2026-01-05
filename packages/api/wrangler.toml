@@ -16,12 +16,14 @@ database_id = "your-database-id-here"  # Replace after: wrangler d1 create zk-ra
 # KV Namespace for sessions
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "your-kv-id-here"  # Replace after: wrangler kv:namespace create SESSIONS
+id = "dev-sessions"
+preview_id = "dev-sessions-preview"
 
 # KV Namespace for nullifiers (anti-spam)
 [[kv_namespaces]]
 binding = "NULLIFIERS"
-id = "your-kv-id-here"  # Replace after: wrangler kv:namespace create NULLIFIERS
+id = "dev-nullifiers"
+preview_id = "dev-nullifiers-preview"
 
 # Durable Objects for chat
 [[durable_objects.bindings]]

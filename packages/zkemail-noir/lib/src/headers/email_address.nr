@@ -37,22 +37,24 @@ pub fn parse_email_address<let MAX_HEADER_LENGTH: u32>(
     header: BoundedVec<u8, MAX_HEADER_LENGTH>,
     email_address_sequence: Sequence,
 ) -> BoundedVec<u8, MAX_EMAIL_ADDRESS_LENGTH> {
-    // check the sequence is proceeded by an acceptable character
     // CRITICAL: In Noir, subtraction in witness generation happens before control flow evaluation
-    // We must avoid (index - 1) when index could be 0, even inside an if-block
-    // Use ternary to safely compute the previous index
-    let prev_index = if email_address_sequence.index != 0 {
-        email_address_sequence.index - 1
-    } else {
-        0 // Safe fallback; the assertion below will be skipped anyway
-    };
+    // We must avoid any subtraction that could underflow when index could be 0
+    // Solution: Use a safe wrapper that handles index 0 without subtraction
     
-    if email_address_sequence.index != 0 {
+    if email_address_sequence.index > 1 {
+        // Safe to check the previous character (index - 1 >= 0)
         assert(
-            EMAIL_ADDRESS_CHAR_TABLE[header.get_unchecked(prev_index)] == 2,
+            EMAIL_ADDRESS_CHAR_TABLE[header.get_unchecked(email_address_sequence.index - 1)] == 2,
+            "Email address must start with an acceptable character",
+        );
+    } else if email_address_sequence.index == 1 {
+        // Special case: index is 1, so we can safely check index 0
+        assert(
+            EMAIL_ADDRESS_CHAR_TABLE[header.get_unchecked(0)] == 2,
             "Email address must start with an acceptable character",
         );
     }
+    // If index is 0, we skip the check entirely (no previous character to validate)
     if email_address_sequence.end_index() < header.len() {
         assert(
             EMAIL_ADDRESS_CHAR_TABLE[header.get_unchecked(

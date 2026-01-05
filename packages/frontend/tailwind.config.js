@@ -5,7 +5,15 @@ export default {
         "./src/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
-        extend: {},
+        extend: {
+            colors: {
+                'brand-primary': 'var(--color-brand-primary)',
+                'brand-secondary': 'var(--color-brand-secondary)',
+                'bg-dark': 'var(--color-bg-dark)',
+                'card-bg': 'var(--color-card-bg)',
+                'glass-border': 'var(--color-glass-border)',
+            }
+        },
     },
     plugins: [],
 }

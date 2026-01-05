@@ -151,14 +151,39 @@ export function AuthPage() {
 
 
 
-                {/* Manual Paste Method (only mode) */}
+                {/* Method Selection */}
+                <div className="flex gap-2 mb-6">
+                    <button
+                        onClick={() => setAuthMethod('manual')}
+                        className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                            authMethod === 'manual'
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                                : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800/70 border border-white/5'
+                        }`}
+                    >
+                        📋 Manual Paste
+                    </button>
+                    <button
+                        onClick={() => setAuthMethod('file')}
+                        className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                            authMethod === 'file'
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                                : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800/70 border border-white/5'
+                        }`}
+                    >
+                        📧 Upload .eml File
+                    </button>
+                </div>
+
+                {/* Manual Paste Method */}
+                {authMethod === 'manual' && (
                     <div className="space-y-4 animate-fade-in">
                         <div className="bg-slate-800/50 p-5 rounded-xl border border-white/5 text-sm text-slate-300 shadow-sm backdrop-blur-sm">
                             <h3 className="font-bold text-white mb-3 flex items-center gap-2">
                                 <span className="text-lg">📋</span> How to get your email content
                             </h3>
                             <ol className="list-decimal pl-4 space-y-2 text-xs text-slate-400 marker:text-slate-600">
-                                <li>Open any email in your <b className="text-slate-200">g.bracu.ac.bd</b> Gmail</li>
+                                <li>Open any email in your <b className="text-slate-200">g.bracu.ac.bd</b> account</li>
                                 <li>Click <b className="text-slate-200">Three Dots</b> ⋮ → <b className="text-slate-200">"Show Original"</b></li>
                                 <li>Click <b className="text-slate-200">"Copy to Clipboard"</b> or select all and copy</li>
                                 <li>Paste the email content below</li>
@@ -203,6 +228,84 @@ Paste your complete email content here..."
                             )}
                         </button>
                     </div>
+                )}
+
+                {/* File Upload Method */}
+                {authMethod === 'file' && (
+                    <div className="space-y-4 animate-fade-in">
+                        <div className="bg-slate-800/50 p-5 rounded-xl border border-white/5 text-sm text-slate-300 shadow-sm backdrop-blur-sm">
+                            <h3 className="font-bold text-white mb-3 flex items-center gap-2">
+                                <span className="text-lg">📁</span> How to get your .eml file
+                            </h3>
+                            <ol className="list-decimal pl-4 space-y-2 text-xs text-slate-400 marker:text-slate-600">
+                                <li>Open any email in your <b className="text-slate-200">g.bracu.ac.bd</b> account</li>
+                                <li>Click <b className="text-slate-200">Three Dots</b> ⋮ → <b className="text-slate-200">"Download Message"</b></li>
+                                <li>Save the <b className="text-slate-200">.eml</b> file to your computer</li>
+                                <li>Drag & drop the file below or click to browse</li>
+                            </ol>
+                            <p className="mt-3 text-xs text-slate-500 flex items-center gap-1.5">
+                                <span>💡</span>
+                                <span>Desktop: Right-click → "Save As" → Choose ".eml" format</span>
+                            </p>
+                        </div>
+
+                        <div 
+                            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer backdrop-blur-sm ${
+                                isDragging 
+                                    ? 'border-indigo-500 bg-indigo-500/10' 
+                                    : 'border-slate-600 hover:border-slate-500 bg-slate-800/30 hover:bg-slate-800/50'
+                            }`}
+                            onDrop={handleDrop}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onClick={() => document.getElementById('eml-file-input')?.click()}
+                        >
+                            <input
+                                id="eml-file-input"
+                                type="file"
+                                accept=".eml,.msg"
+                                onChange={handleFileInputChange}
+                                className="hidden"
+                            />
+                            <div className="text-5xl mb-3">📧</div>
+                            <p className="text-white font-medium mb-1">
+                                {fileName ? `Selected: ${fileName}` : 'Drop .eml file here'}
+                            </p>
+                            <p className="text-slate-400 text-xs">
+                                {fileName ? 'Click to select different file' : 'or click to browse'}
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                const fileInput = document.getElementById('eml-file-input') as HTMLInputElement;
+                                if (fileInput?.files?.[0]) {
+                                    handleFileUpload(fileInput.files[0]);
+                                } else {
+                                    setLocalError('Please select an .eml file first');
+                                }
+                            }}
+                            disabled={isProving || !fileName}
+                            className={`w-full py-3.5 rounded-xl font-bold text-base transition-all shadow-lg ${
+                                isProving || !fileName
+                                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:scale-[1.01] active:scale-[0.98]'
+                            } flex items-center justify-center gap-2`}
+                        >
+                            {isProving ? (
+                                <>
+                                    <span className="w-4 h-4 border-2 border-slate-500/30 border-t-slate-500 rounded-full animate-spin"></span>
+                                    <span>Generating Proof...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>🛡️</span>
+                                    <span>Verify & Login Anonymously</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
 
 
                 {/* Proving Status */}

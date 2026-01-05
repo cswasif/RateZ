@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
-import { generateEmailVerifierInputs } from '../lib/email-parser';
-import { enhancedZKProver } from '../lib/enhanced-zk-prover';
+import { generateBRACUProof, loadCircuitFromUrl } from '../lib/zk-prover';
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -36,38 +35,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(null);
         try {
             console.log("Starting login process...");
-            console.log("[ZKAuthProvider] Prover status:", enhancedZKProver.getStatus());
 
-            // 1. Generate Inputs for Circuit
-            console.log("Generating inputs...");
-            const inputs = await generateEmailVerifierInputs(rawEmail, {
-                maxHeadersLength: 1024,
-                maxBodyLength: 0,
-                ignoreBodyHashCheck: true
+            // 1. Load Circuit (if not loaded)
+            try {
+                // In production, this should be cached or loaded once
+                await loadCircuitFromUrl('/circuits/bracu_verifier.json');
+            } catch (e) {
+                console.warn("Could not load circuit from URL, checking if already set...");
+            }
+
+            // 2. Generate Proof using Noir Prover
+            console.log("Generating proof with Noir...");
+            const result = await generateBRACUProof(rawEmail, {
+                maxHeaderLength: 2560
             });
 
-            console.log("Inputs generated:", inputs);
-
-            // 2. Generate Proof using enhanced prover
-            console.log("Generating proof with enhanced prover...");
-            const result = await enhancedZKProver.generateProof(inputs);
-            const { proof, publicSignals } = result;
-
-            console.log("Proof generated!");
+            console.log("Proof generated!", result);
 
             // 3. Send to Server
+            // Backend expects: { proof: number[], publicInputs: string[] }
             const res = await fetch('/api/auth/verify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    proof,
-                    publicSignals
+                    proof: result.proof,
+                    publicInputs: result.publicInputs
                 })
             });
 
             if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Verification failed on server');
+                const data = await res.json().catch(() => ({ error: res.statusText }));
+                throw new Error(data.error || `Verification failed: ${res.status}`);
             }
 
             const { token } = await res.json();

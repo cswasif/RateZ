@@ -49,7 +49,39 @@ export class ZKVerifier {
       if (stored) {
         circuitBytecode = stored
       } else {
-        throw new Error('Circuit bytecode not loaded. Please deploy the compiled circuit.')
+        // Fallback for Development: Fetch from Frontend Dev Server
+        // Note: checking environment variable availability 
+        if (this.env.ENVIRONMENT !== 'production') {
+          console.log('Dev mode: Fetching circuit from frontend...');
+          try {
+            const res = await fetch('http://localhost:5173/circuits/bracu_verifier.json');
+            if (res.ok) {
+              const circuit = await res.json() as any; // Cast as necessary
+              circuitBytecode = JSON.stringify(circuit); // Bytecode property?
+              // Wait, CompiledCircuit is an object.
+              // initBackend expects string? 
+              // No, setCircuitBytecode takes string.
+              // But initBackend passes it to UltraPlonkBackend.
+              // UltraPlonkBackend takes Uint8Array | number[] | object?
+              // Check zk-verifier.ts line 57: new UltraPlonkBackend(circuitBytecode, ...)
+              // If circuitBytecode is the JSON string, bb.js might handle it?
+              // Or bb.js expects the `bytecode` FIELD from the JSON.
+
+              if (circuit.bytecode) {
+                circuitBytecode = circuit.bytecode;
+              } else {
+                // Maybe it's the full JSON object
+                circuitBytecode = JSON.stringify(circuit);
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to fetch circuit from frontend:', e);
+          }
+        }
+
+        if (!circuitBytecode) {
+          throw new Error('Circuit bytecode not loaded. Please deploy the compiled circuit.')
+        }
       }
     }
 

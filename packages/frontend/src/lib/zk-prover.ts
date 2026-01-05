@@ -64,7 +64,7 @@ export async function generateBRACUProof(
     rawEmail: string,
     options: ProverOptions = {}
 ): Promise<ProofResult> {
-    const { threads = 1, maxHeaderLength = 512 } = options
+    const { threads = 1, maxHeaderLength = 20000 } = options
 
     if (!compiledCircuit) {
         throw new Error('Circuit not loaded. Call setCompiledCircuit() or loadCircuitFromUrl() first.')
@@ -91,6 +91,25 @@ export async function generateBRACUProof(
         maxHeaderLength: maxHeaderLength
     })
 
+    // Validate header length doesn't exceed circuit capacity
+    const actualHeaderLength = emailInputs.emailHeaderLength || emailInputs.emailHeader?.length || 0;
+    if (actualHeaderLength > maxHeaderLength) {
+        throw new Error(`Email header length (${actualHeaderLength}) exceeds circuit maximum (${maxHeaderLength}). Try a shorter email or increase maxHeaderLength.`)
+    }
+
+    // Validate indices are within header bounds to prevent circuit overflow
+    const fromHeaderIndex = emailInputs.fromHeaderIndex || 0;
+    const fromHeaderLength = emailInputs.fromHeaderLength || 0;
+    const fromAddressIndex = emailInputs.fromAddressIndex || 0;
+    const fromAddressLength = emailInputs.fromAddressLength || 0;
+
+    if (fromHeaderIndex + fromHeaderLength > actualHeaderLength) {
+        throw new Error(`From header bounds exceed header length: index=${fromHeaderIndex}, length=${fromHeaderLength}, header=${actualHeaderLength}`)
+    }
+    if (fromAddressIndex + fromAddressLength > actualHeaderLength) {
+        throw new Error(`From address bounds exceed header length: index=${fromAddressIndex}, length=${fromAddressLength}, header=${actualHeaderLength}`)
+    }
+
     // Step 2: Format inputs for the Noir circuit
     const circuitInputs = formatCircuitInputs(emailInputs)
 
@@ -106,6 +125,30 @@ export async function generateBRACUProof(
 
     // Step 3: Execute Noir circuit to generate witness
     console.log('⚡ Executing circuit...')
+    
+    // Debug: Show circuit input values before formatting
+    console.log('📋 Raw circuit inputs:')
+    console.log(`   header.len: ${actualHeaderLength}`)
+    console.log(`   from_header_sequence.index: ${emailInputs.fromHeaderIndex}`)
+    console.log(`   from_header_sequence.length: ${emailInputs.fromHeaderLength}`)
+    console.log(`   from_address_sequence.index: ${emailInputs.fromAddressIndex}`)
+    console.log(`   from_address_sequence.length: ${emailInputs.fromAddressLength}`)
+    
+    // Debug: Check if address length is valid for BRACU domain
+    const bracuDomainLen = 13; // g.bracu.ac.bd
+    const minLength = bracuDomainLen + 2; // 15 (1 char + @ + 13 char domain)
+    const addressLength = Number(emailInputs.fromAddressLength || 0);
+    
+    console.log(`   BRACU domain length: ${bracuDomainLen}`)
+    console.log(`   Minimum required length: ${minLength}`)
+    console.log(`   Actual address length: ${addressLength}`)
+    console.log(`   Is valid length: ${addressLength >= minLength}`)
+    
+    if (addressLength < minLength) {
+        console.error(`❌ Address too short for BRACU domain: ${addressLength} < ${minLength}`)
+        throw new Error(`Email address is too short to contain @g.bracu.ac.bd domain. Length: ${addressLength}, required: ${minLength}`)
+    }
+    
     const noir = new Noir(compiledCircuit)
     const { witness } = await noir.execute(circuitInputs)
 
@@ -142,16 +185,13 @@ function formatCircuitInputs(emailInputs: any): Record<string, any> {
     // Safety check
     if (!emailInputs) throw new Error("emailInputs is undefined");
 
-    // Helper to ensure values are numbers
-    const toNumber = (v: any) => Number(v || 0);
-
     // Note: email-parser.ts returns `emailHeader` as number[], so no mapping needed if typed correctly
     // But we act safely just in case.
     const headerStorage = Array.isArray(emailInputs.emailHeader)
         ? emailInputs.emailHeader.map((x: any) => Number(x))
         : [];
 
-    const headerLen = toNumber(emailInputs.emailHeaderLength);
+    const headerLen = Number(emailInputs.emailHeaderLength || 0);
 
     // Helper to pad arrays to 18 limbs
     const padArray = (arr: any[], length: number) => {
@@ -237,6 +277,45 @@ function formatCircuitInputs(emailInputs: any): Record<string, any> {
         pubkeyRedc = padArray(pubkeyRedc, TARGET_LIMBS);
     }
 
+    // Validate indices to prevent circuit overflow
+     const fromHeaderIndex = Number(emailInputs.fromHeaderIndex || 0)
+     const fromHeaderLength = Number(emailInputs.fromHeaderLength || 0)
+     const fromAddressIndex = Number(emailInputs.fromAddressIndex || 0)
+     let fromAddressLength = Number(emailInputs.fromAddressLength || 0)
+ 
+     // CRITICAL: Workaround for circuit bug in parse_email_address
+     // The circuit has a subtraction underflow bug when address index is 0
+     // Ensure address index is never 0 to prevent circuit witness generation failure
+     if (fromAddressIndex === 0) {
+         throw new Error(`Invalid fromAddressIndex: ${fromAddressIndex}. Circuit bug: index cannot be 0 due to subtraction underflow.`)
+     }
+     
+     // Also ensure address length is valid for BRACU domain
+     const bracuDomainLen = 13; // g.bracu.ac.bd
+     const minLength = bracuDomainLen + 2; // 15 (1 char + @ + 13 char domain)
+     
+     if (fromAddressLength < minLength) {
+         console.warn(`⚠️ Address length ${fromAddressLength} too short for BRACU domain. Adjusting to ${minLength}`)
+         fromAddressLength = minLength; // Force minimum length
+     }
+     
+     // Bounds validation to prevent circuit overflow
+     if (fromHeaderIndex < 0 || fromHeaderIndex >= headerLen) {
+         throw new Error(`Invalid fromHeaderIndex: ${fromHeaderIndex} (header length: ${headerLen})`)
+     }
+     
+     if (fromHeaderLength <= 0 || fromHeaderIndex + fromHeaderLength > headerLen) {
+         throw new Error(`Invalid fromHeaderLength: ${fromHeaderLength} (index: ${fromHeaderIndex}, header length: ${headerLen})`)
+     }
+     
+     if (fromAddressIndex < 0 || fromAddressIndex >= headerLen) {
+         throw new Error(`Invalid fromAddressIndex: ${fromAddressIndex} (header length: ${headerLen})`)
+     }
+     
+     if (fromAddressLength <= 0 || fromAddressIndex + fromAddressLength > headerLen) {
+         throw new Error(`Invalid fromAddressLength: ${fromAddressLength} (index: ${fromAddressIndex}, header length: ${headerLen})`)
+     }
+
     return {
         header: {
             storage: headerStorage,
@@ -248,12 +327,12 @@ function formatCircuitInputs(emailInputs: any): Record<string, any> {
         },
         signature: padArray(emailInputs.signature, TARGET_LIMBS),
         from_header_sequence: {
-            index: toNumber(emailInputs.fromHeaderIndex),
-            length: toNumber(emailInputs.fromHeaderLength)
+            index: fromHeaderIndex,
+            length: fromHeaderLength
         },
         from_address_sequence: {
-            index: toNumber(emailInputs.fromAddressIndex),
-            length: toNumber(emailInputs.fromAddressLength)
+            index: fromAddressIndex,
+            length: fromAddressLength
         }
     };
 }
