@@ -4,8 +4,6 @@ use zkemail::{
     MAX_EMAIL_ADDRESS_LENGTH, Sequence,
     partial_hash::partial_sha256_var_end,
 };
-use bignum::{params::BigNumParams, RuntimeBigNum};
-use rsa::{rsa::verify_sha256_pkcs1v15, types::RBN2048};
 
 // Maximum remaining header length after partial hash precomputation
 global MAX_REMAINING_HEADER_LENGTH: u32 = 2560;
@@ -30,7 +28,7 @@ global RSA_EXPONENT: u32 = 65537;
  * 3. Extracts and validates the From email domain
  *
  * @param partial_header_hash - Precomputed SHA256 state (8 x u32) from WASM
- * @param remaining_header - Last portion of header containing From field (≤2560 bytes)
+ * @param remaining_header - Last portion of header containing From field (<=2560 bytes)
  * @param total_header_length - Full original header length (for SHA256 finalization)
  * @param pubkey - DKIM RSA Public Key
  * @param signature - DKIM RSA Signature
@@ -58,14 +56,8 @@ fn main(
 
     // 2. Verify DKIM signature over the completed hash
     //    This proves the email integrity - it was signed by the DKIM key
-    let params: BigNumParams<KEY_LIMBS_2048, 2048> = BigNumParams::new(
-        false,
-        convert_field_to_u128(pubkey.modulus),
-        convert_field_to_u128(pubkey.redc),
-    );
-    let sig: RBN2048 = RuntimeBigNum::from_array(params, convert_field_to_u128(signature));
-    sig.validate_in_range();
-    assert(verify_sha256_pkcs1v15(header_hash, sig, RSA_EXPONENT), "DKIM signature verification failed");
+    // Use the built-in DKIM verification from zkemail library
+    pubkey.verify_dkim_signature_with_hash(header_hash, signature);
 
     // 3. Extract "From" email address from remaining header
     let from_tag = comptime { "from".as_bytes() };
@@ -100,14 +92,5 @@ fn main(
     // 5. Generate outputs
     let email_nullifier = pedersen_hash(signature);
     [pubkey.hash(), email_nullifier]
-}
-
-// Helper: convert Field array to u128 array
-fn convert_field_to_u128<let KEY_LIMBS: u32>(arr: [Field; KEY_LIMBS]) -> [u128; KEY_LIMBS] {
-    let mut result: [u128; KEY_LIMBS] = [0; KEY_LIMBS];
-    for i in 0..KEY_LIMBS {
-        result[i] = arr[i] as u128;
-    }
-    result
 }
 

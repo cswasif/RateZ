@@ -95,6 +95,25 @@ impl RSAPubkey<KEY_LIMBS_2048> {
         header_hash
     }
 
+    pub fn verify_dkim_signature_with_hash(
+        self,
+        header_hash: [u8; 32],
+        signature: [Field; KEY_LIMBS_2048],
+    ) {
+        let params: BigNumParams<KEY_LIMBS_2048, 2048> = BigNumParams::new(
+            false,
+            convert_field_to_u128(self.modulus),
+            convert_field_to_u128(self.redc),
+        );
+
+        let signature: RBN2048 =
+            RuntimeBigNum::from_array(params, convert_field_to_u128(signature));
+        signature.validate_in_range();
+
+        // verify the DKIM signature over the precomputed header hash
+        assert(verify_sha256_pkcs1v15(header_hash, signature, RSA_EXPONENT));
+    }
+
     pub fn hash(self) -> Field {
         // validate range
         self.validate_in_range();
