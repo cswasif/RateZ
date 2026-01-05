@@ -1,4 +1,4 @@
-name: Build WASM Module
+name: Build WASM Module and Compile Circuits
 
 on:
   push:
@@ -23,7 +23,13 @@ jobs:
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
     
-    - name: Fetch dependencies
+    - name: Install Noir
+      run: |
+        curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
+        export PATH="$HOME/.noir/bin:$PATH"
+        noirup --version 1.0.0-beta.5
+    
+    - name: Fetch Rust dependencies
       run: |
         cd packages/zk-wasm
         cargo fetch
@@ -33,6 +39,14 @@ jobs:
         cd packages/zk-wasm
         wasm-pack build --target web --out-dir ../frontend/src/lib/zk-wasm-pkg
     
+    - name: Compile Noir circuits
+      run: |
+        export PATH="$HOME/.noir/bin:$PATH"
+        cd packages/zkemail-noir/examples/bracu_verifier
+        nargo compile
+        mkdir -p ../../../frontend/public/circuits
+        cp target/bracu_verifier.json ../../../frontend/public/circuits/
+    
     - name: Upload WASM artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -40,12 +54,19 @@ jobs:
         path: packages/frontend/src/lib/zk-wasm-pkg/
         retention-days: 30
     
+    - name: Upload circuit artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: circuit-artifacts
+        path: packages/frontend/public/circuits/
+        retention-days: 30
+    
     - name: Install Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
     
-    - name: Install dependencies
+    - name: Install frontend dependencies
       run: |
         cd packages/frontend
         npm install
