@@ -6,9 +6,9 @@ use zkemail::{
 };
 
 // Maximum remaining header length after partial hash precomputation
-// Reduced from 16384 to 512 to fit in browser memory during proof generation
-// Note: Preprocessed headers are typically ~150-200 bytes
-global MAX_REMAINING_HEADER_LENGTH: u32 = 512;
+// Increased from 512 to 2048 to handle larger From headers while maintaining
+// reasonable browser memory usage during proof generation
+global MAX_REMAINING_HEADER_LENGTH: u32 = 2048;
 
 // BRACU domain: g.bracu.ac.bd (13 characters)
 global BRACU_DOMAIN_LEN: u32 = 13;
@@ -56,12 +56,9 @@ fn main(
         total_header_length
     );
 
-    // 2. DEMO MODE: Skip DKIM signature verification
-    //    TODO: Re-enable for production - requires proper partial hashing architecture
-    //    that preserves original header bytes instead of preprocessing
-    // pubkey.verify_dkim_signature_with_hash(header_hash, signature);
-    // Instead, we just use the header_hash for domain verification below
-    let _ = header_hash; // Silence unused variable warning
+    // 2. Verify DKIM signature
+    //    The RSA signature verifies that the email header hash was signed by the domain's key
+    pubkey.verify_dkim_signature_with_hash(header_hash, signature);
 
     // 3. Extract "From" email address from remaining header
     let from_tag = comptime { "from".as_bytes() };
