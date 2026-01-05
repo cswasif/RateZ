@@ -6,7 +6,9 @@ use zkemail::{
 };
 
 // Maximum remaining header length after partial hash precomputation
-global MAX_REMAINING_HEADER_LENGTH: u32 = 16384;
+// Reduced from 16384 to 512 to fit in browser memory during proof generation
+// Note: Preprocessed headers are typically ~150-200 bytes
+global MAX_REMAINING_HEADER_LENGTH: u32 = 512;
 
 // BRACU domain: g.bracu.ac.bd (13 characters)
 global BRACU_DOMAIN_LEN: u32 = 13;

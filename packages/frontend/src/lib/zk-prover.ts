@@ -123,7 +123,7 @@ export async function generateBRACUProof(
     options: ProverOptions = {}
 ): Promise<ProofResult> {
     const { threads = 1 } = options
-    const CIRCUIT_MAX_REMAINING_HEADER = 16384; // Max remaining header size in circuit
+    const CIRCUIT_MAX_REMAINING_HEADER = 512; // Max remaining header size in circuit (reduced for browser memory)
 
     if (!compiledCircuit) {
         throw new Error('Circuit not loaded. Call setCompiledCircuit() or loadCircuitFromUrl() first.')
@@ -346,7 +346,7 @@ function formatCircuitInputsPartialHash(
     fromAddressLength: number
 ): Record<string, any> {
     const TARGET_LIMBS = 18;
-    const MAX_REMAINING_HEADER = 16384;
+    const MAX_REMAINING_HEADER = 512;
 
     // Helper to pad arrays to exact length
     const padArray = (arr: any[], length: number, fillValue: string = "0") => {
