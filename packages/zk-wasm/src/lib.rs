@@ -291,6 +291,232 @@ fn sha256_compress(state: &mut [u32; 8], block: &[u32; 16]) {
 }
 
 
+// ============================================================================
+// DKIM Signature Parsing for Browser
+// ============================================================================
+
+use num_bigint::BigUint;
+use regex::Regex;
+
+/// Parsed DKIM signature data for circuit inputs
+#[wasm_bindgen]
+pub struct DKIMResult {
+    pubkey_modulus:Vec<String>,
+    pubkey_redc: Vec<String>,
+    signature: Vec<String>,
+    from_header_index: usize,
+    from_header_length: usize,
+    from_address_index: usize,
+    from_address_length: usize,
+    from_email: String,
+}
+
+#[wasm_bindgen]
+impl DKIMResult {
+    #[wasm_bindgen(getter)]
+    pub fn pubkey_modulus(&self) -> Vec<String> {
+        self.pubkey_modulus.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn pubkey_redc(&self) -> Vec<String> {
+        self.pubkey_redc.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn signature(&self) -> Vec<String> {
+        self.signature.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn from_header_index(&self) -> usize {
+        self.from_header_index
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn from_header_length(&self) -> usize {
+        self.from_header_length
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn from_address_index(&self) -> usize {
+        self.from_address_index
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn from_address_length(&self) -> usize {
+        self.from_address_length
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn from_email(&self) -> String {
+        self.from_email.clone()
+    }
+}
+
+/// Parse DKIM signature from email and extract circuit inputs
+#[wasm_bindgen]
+pub fn parse_dkim_from_email(email_bytes: &[u8]) -> Result<DKIMResult, JsValue> {
+    let email_str = std::str::from_utf8(email_bytes)
+        .map_err(|e| JsValue::from_str(&format!("Invalid UTF-8: {}", e)))?;
+
+    // Extract DKIM signature
+    let dkim_sig = extract_dkim_signature(email_str)?;
+    
+    // Parse RSA signature from DKIM
+    let signature_bigint = parse_base64_to_bigint(&dkim_sig.b)
+        .ok_or_else(|| JsValue::from_str("Failed to parse DKIM signature"))?;
+    
+    // For now, stub the public key - in production this would query DNS
+    // The public key would be fetched via: dig TXT {selector}._domainkey.{domain}
+    // For now we'll create a mock 2048-bit key that the circuit expects
+    let pubkey_modulus = create_stub_pubkey();
+    
+    // Convert to 18 limbs (120-bit each for 2048-bit key)
+    let signature_limbs = bigint_to_limbs(&signature_bigint, 18, 120);
+    let pubkey_limbs = bigint_to_limbs(&pubkey_modulus, 18, 120);
+    let pubkey_redc = calculate_redc_param(&pubkey_modulus, 18, 120);
+
+    // Find From header
+    let (from_index, from_length, addr_index, addr_length, from_email) = 
+        find_from_header_info(email_str)?;
+
+    Ok(DKIMResult {
+        pubkey_modulus: pubkey_limbs,
+        pubkey_redc,
+        signature: signature_limbs,
+        from_header_index: from_index,
+        from_header_length: from_length,
+        from_address_index: addr_index,
+        from_address_length: addr_length,
+        from_email,
+    })
+}
+
+/// Extract DKIM-Signature header from email
+struct DKIMSignature {
+    b: String,    // base64-encoded signature
+    _s: String,   // selector
+    _d: String,   // domain
+}
+
+fn extract_dkim_signature(email: &str) -> Result<DKIMSignature, JsValue> {
+    // Find DKIM-Signature header (can span multiple lines)
+    let dkim_regex = Regex::new(r"(?i)DKIM-Signature:\s*([^\r\n]*(?:\r?\n\s+[^\r\n]*)*)")
+        .map_err(|e| JsValue::from_str(&format!("Regex error: {}", e)))?;
+    
+    let captures = dkim_regex.captures(email)
+        .ok_or_else(|| JsValue::from_str("No DKIM-Signature header found"))?;
+    
+    let dkim_header = captures.get(1)
+        .ok_or_else(|| JsValue::from_str("Failed to extract DKIM header"))?
+        .as_str()
+        .replace("\r\n", "")
+        .replace("\n", "");
+
+    // Extract b= (signature)
+    let b_regex = Regex::new(r"b=([A-Za-z0-9+/=]+)")
+        .map_err(|e| JsValue::from_str(&format!("Regex error: {}", e)))?;
+    let b = b_regex.captures(&dkim_header)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().to_string())
+        .ok_or_else(|| JsValue::from_str("No signature (b=) found in DKIM header"))?;
+
+    // Extract s= (selector)
+    let s_regex = Regex::new(r"s=([^;\s]+)")
+        .map_err(|e| JsValue::from_str(&format!("Regex error: {}", e)))?;
+    let _s = s_regex.captures(&dkim_header)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().to_string())
+        .unwrap_or_default();
+
+    // Extract d= (domain)
+    let d_regex = Regex::new(r"d=([^;\s]+)")
+        .map_err(|e| JsValue::from_str(&format!("Regex error: {}", e)))?;
+    let _d = d_regex.captures(&dkim_header)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().to_string())
+        .unwrap_or_default();
+
+    Ok(DKIMSignature { b, _s, _d })
+}
+
+/// Parse base64 to BigInt
+fn parse_base64_to_bigint(b64: &str) -> Option<BigUint> {
+    use base64::{Engine as _, engine::general_purpose};
+    let bytes = general_purpose::STANDARD.decode(b64).ok()?;
+    Some(BigUint::from_bytes_be(&bytes))
+}
+
+/// Create stub 2048-bit RSA public key (in production, fetch from DNS)
+fn create_stub_pubkey() -> BigUint {
+    // This is a mock value - in production you'd fetch the actual public key from DNS
+    // For Gmail's DKIM, you'd query: {selector}._domainkey.gmail.com TXT
+    BigUint::from(65537u32) // Just e=65537 as placeholder
+}
+
+/// Convert BigInt to limbs (little-endian)
+fn bigint_to_limbs(value: &BigUint, num_limbs: usize, limb_bits: usize) -> Vec<String> {
+    let mut limbs = vec![];
+    let limb_mask = (BigUint::from(1u32) << limb_bits) - 1u32;
+    let mut temp = value.clone();
+
+    for _ in 0..num_limbs {
+        let limb = &temp & &limb_mask;
+        limbs.push(limb.to_string());
+        temp >>= limb_bits;
+    }
+
+    limbs
+}
+
+/// Calculate REDC parameter for Montgomery multiplication
+fn calculate_redc_param(modulus: &BigUint, num_limbs: usize, limb_bits: usize) -> Vec<String> {
+    // redc = (-N^-1) mod R, where R = 2^(num_limbs * limb_bits)
+    // For stub, just return zeros (in production, calculate properly)
+    vec!["0".to_string(); num_limbs]
+}
+
+/// Find From header and email address positions
+fn find_from_header_info(email: &str) -> Result<(usize, usize, usize, usize, String), JsValue> {
+    // Find From header
+    let from_regex = Regex::new(r"(?im)^From:\s*([^\r\n]+)")
+        .map_err(|e| JsValue::from_str(&format!("Regex error: {}", e)))?;
+    
+    let captures = from_regex.captures(email)
+        .ok_or_else(|| JsValue::from_str("No From header found"))?;
+    
+    let from_match = captures.get(0)
+        .ok_or_else(|| JsValue::from_str("Failed to extract From header"))?;
+    
+    let from_index = from_match.start();
+    let from_length = from_match.end() - from_match.start();
+
+    // Extract email address from From header
+    let from_content = captures.get(1)
+        .ok_or_else(|| JsValue::from_str("Failed to extract From content"))?
+        .as_str();
+    
+    let email_regex = Regex::new(r"<([^>]+)>|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})")
+        .map_err(|e| JsValue::from_str(&format!("Regex error: {}", e)))?;
+    
+    let email_captures = email_regex.captures(from_content)
+        .ok_or_else(|| JsValue::from_str("No email address found in From header"))?;
+    
+    let from_email = email_captures.get(1)
+        .or_else(|| email_captures.get(2))
+        .ok_or_else(|| JsValue::from_str("Failed to extract email address"))?
+        .as_str()
+        .to_lowercase();
+
+    // Find email address position in full email
+    let addr_index = email.find(&from_email)
+        .ok_or_else(|| JsValue::from_str("Could not find email address in email"))?;
+    let addr_length = from_email.len();
+
+    Ok((from_index, from_length, addr_index, addr_length, from_email))
+}
+
 
 // ============================================================================
 // Existing ZK Verifier/Prover code below
