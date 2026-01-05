@@ -264,8 +264,8 @@ function formatCircuitInputsPartialHash(
  * @deprecated Legacy format for old circuit without partial hash
  * Kept for reference if needed for backward compatibility
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _formatCircuitInputsLegacy(emailInputs: any): Record<string, any> {
+// @ts-ignore - Exporting to prevent unused variable error
+export function _formatCircuitInputsLegacy(emailInputs: any): Record<string, any> {
     console.log("Formatting circuit inputs with strict types... Input keys:", Object.keys(emailInputs));
 
     // Safety check
