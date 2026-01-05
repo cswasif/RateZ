@@ -57,11 +57,24 @@ fn main(
     
     // Minimum address length: 1 char + '@' + 13 char domain = 15
     let min_length = BRACU_DOMAIN_LEN + 2; // 15
-    assert(addr_len >= min_length, "Address too short for BRACU domain");
     
-    // Safe subtraction now that we've validated the length
-    // at_index points to where '@' should be
-    let at_index = addr_len - BRACU_DOMAIN_LEN - 1;
+    // CRITICAL: In Noir, subtraction is checked during witness generation BEFORE assertions.
+    // We must avoid any subtraction that could underflow, even if an assertion would catch it.
+    // Use a safe_offset calculation that defaults to 0 when addr_len is too small.
+    
+    // Calculate safe offset: if addr_len < min_length, use 0 to avoid underflow
+    // The assertion will still fail, but the arithmetic won't cause witness generation to fail
+    let is_valid_length = addr_len >= min_length;
+    
+    // Safe calculation: use addr_len if valid, otherwise use min_length (which won't underflow)
+    let safe_len = if is_valid_length { addr_len } else { min_length };
+    
+    // Now these subtractions are safe because safe_len >= min_length >= BRACU_DOMAIN_LEN + 2
+    let at_index = safe_len - BRACU_DOMAIN_LEN - 1;
+    
+    // Assert the actual length requirement - this will fail if address is too short
+    assert(is_valid_length, "Address too short for BRACU domain");
+    
     let at_char = from_address.get(at_index);
     assert(at_char == 64, "Invalid domain separator - expected '@'"); // 64 is '@'
 
