@@ -519,11 +519,25 @@ fn bigint_to_limbs(value: &BigUint, num_limbs: usize, limb_bits: usize) -> Vec<S
     limbs
 }
 
-/// Calculate REDC parameter for Montgomery multiplication
-fn calculate_redc_param(_modulus: &BigUint, num_limbs: usize, _limb_bits: usize) -> Vec<String> {
-    // redc = (-N^-1) mod R, where R = 2^(num_limbs * limb_bits)
-    // For stub, just return zeros (in production, calculate properly)
-    vec!["0".to_string(); num_limbs]
+/// Calculate REDC parameter for Montgomery/Barrett reduction used in Noir
+fn calculate_redc_param(modulus: &BigUint, num_limbs: usize, limb_bits: usize) -> Vec<String> {
+    // Noir's BigNum library uses Barrett Reduction.
+    // The parameter is: floor(2^(2*k + 4) / modulus)
+    // where k is the number of bits in the modulus.
+    // See: https://github.com/noir-lang/noir-bignum-paramgen/blob/main/src/lib.rs
+
+    let k = modulus.bits();
+    // 4 bits for overflow protection as defined in noir-bignum-paramgen
+    let overflow_bits = 4;
+    
+    let one = BigUint::from(1u32);
+    let shift_amount = (k as u64) * 2 + overflow_bits;
+    let multiplicand = one << shift_amount;
+    
+    let redc_param = multiplicand / modulus;
+
+    // Split result into the requested number of limbs
+    bigint_to_limbs(&redc_param, num_limbs, limb_bits)
 }
 
 /// Find From header and email address positions
