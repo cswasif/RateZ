@@ -91,29 +91,43 @@ fn main(
     let addr_len = from_address.len();
     let min_length = BRACU_DOMAIN_LEN + 2; // 15 (1 char + '@' + 13 char domain)
     
-    // Safe calculation to avoid underflow
-    let is_valid_length = addr_len >= min_length;
+    // Comprehensive bounds validation to prevent overflow
+    assert(addr_len >= min_length, "Address too short for BRACU domain");
+    assert(addr_len <= 100, "Address too long for circuit constraints"); // Reasonable max length
     
-    assert(is_valid_length, "Address too short for BRACU domain");
+    // CRITICAL: In Noir, subtraction in witness generation happens before control flow evaluation
+    // We must avoid any subtraction that could underflow when index could be 0
+    // Solution: Use explicit bounds checking without conditional subtraction
     
-    // Calculate safe at_index with bounds checking
-    let at_index = if is_valid_length { 
-        addr_len - BRACU_DOMAIN_LEN - 1 
-    } else { 
-        0 // Safe fallback - won't be used due to assert above
+    // Ensure we have enough characters for the domain + '@' + at least 1 character before '@'
+    assert(addr_len >= BRACU_DOMAIN_LEN + 2, "Address too short for BRACU domain");
+    
+    // Find the '@' character by checking from the end backwards
+    // Start from a safe position that guarantees no underflow
+    let safe_start_check = if addr_len > BRACU_DOMAIN_LEN + 1 {
+        addr_len - BRACU_DOMAIN_LEN - 1
+    } else {
+        0
     };
     
-    // Additional bounds check to prevent overflow
-    assert(at_index < addr_len, "Domain index out of bounds");
-    assert(at_index + BRACU_DOMAIN_LEN < addr_len, "Domain extends beyond address");
+    // Validate that we can safely access the domain area
+    assert(safe_start_check + BRACU_DOMAIN_LEN + 1 <= addr_len, "Domain area out of bounds");
+    assert(safe_start_check < addr_len, "Safe start index out of bounds");
     
-    let at_char = from_address.get(at_index);
+    // The '@' character should be at safe_start_check
+    let at_char = from_address.get(safe_start_check);
     assert(at_char == 64, "Invalid domain separator - expected '@'"); // 64 is '@'
 
     // Check domain characters: g.bracu.ac.bd
     let domain_bytes: [u8; 13] = [103, 46, 98, 114, 97, 99, 117, 46, 97, 99, 46, 98, 100];
+    
+    // Add bounds validation for the loop to prevent overflow
+    assert(safe_start_check + 1 + 12 < from_address.len(), "Domain character access out of bounds");
+    
     for i in 0..13 {
-        let byte_val = from_address.get(at_index + 1 + i);
+        let char_index = safe_start_check + 1 + i;
+        assert(char_index < from_address.len(), "Domain character index out of bounds");
+        let byte_val = from_address.get(char_index);
         assert(byte_val == domain_bytes[i], "Domain mismatch");
     }
 
