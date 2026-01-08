@@ -61,6 +61,24 @@ fn main(
     pubkey.verify_dkim_signature_with_hash(header_hash, signature);
 
     // 3. Extract "From" email address from remaining header
+    // Validate sequence parameters first to prevent overflow
+    let from_header_index = from_header_sequence.index;
+    let from_header_length = from_header_sequence.length;
+    let from_address_index = from_address_sequence.index;
+    let from_address_length = from_address_sequence.length;
+    
+    // Bounds checking for header sequence
+    assert(from_header_index < remaining_header.len(), "From header index out of bounds");
+    assert(from_header_index + from_header_length <= remaining_header.len(), "From header extends beyond remaining header");
+    
+    // Bounds checking for address sequence  
+    assert(from_address_index < remaining_header.len(), "From address index out of bounds");
+    assert(from_address_index + from_address_length <= remaining_header.len(), "From address extends beyond remaining header");
+    
+    // Ensure address is within the header
+    assert(from_address_index >= from_header_index, "From address must be within From header");
+    assert(from_address_index + from_address_length <= from_header_index + from_header_length, "From address must be within From header bounds");
+    
     let from_tag = comptime { "from".as_bytes() };
     let from_address = get_email_address(
         remaining_header,
@@ -75,10 +93,19 @@ fn main(
     
     // Safe calculation to avoid underflow
     let is_valid_length = addr_len >= min_length;
-    let safe_len = if is_valid_length { addr_len } else { min_length };
-    let at_index = safe_len - BRACU_DOMAIN_LEN - 1;
     
     assert(is_valid_length, "Address too short for BRACU domain");
+    
+    // Calculate safe at_index with bounds checking
+    let at_index = if is_valid_length { 
+        addr_len - BRACU_DOMAIN_LEN - 1 
+    } else { 
+        0 // Safe fallback - won't be used due to assert above
+    };
+    
+    // Additional bounds check to prevent overflow
+    assert(at_index < addr_len, "Domain index out of bounds");
+    assert(at_index + BRACU_DOMAIN_LEN < addr_len, "Domain extends beyond address");
     
     let at_char = from_address.get(at_index);
     assert(at_char == 64, "Invalid domain separator - expected '@'"); // 64 is '@'

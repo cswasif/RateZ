@@ -14,14 +14,12 @@ interface CircuitWithVersion extends CompiledCircuit {
     hash: string;
 }
 // Use our wrapper which calculates extra circuit inputs like from_header_sequence
-import { generateEmailVerifierInputs, generateEmailVerifierInputsWithPreprocessedHeader } from '../lib/email-parser'
-// Email preprocessing for large headers
-import { preprocessEmailHeaders, truncateHeaderForCircuit } from '../lib/email-preprocessor'
+import { generateEmailVerifierInputs } from '../lib/email-parser'
+// Proper block-boundary splitting for partial hashing (preserves original bytes)
+import { splitHeaderAtBlockBoundary, type HeaderSplitResult } from '../lib/email-preprocessor'
 // Import partial hash functions from zk-wasm
 import {
-    computePartialHash,
-    computePartialHashFallback,
-    isPartialHashAvailable,
+    computeSHA256StateOverBlocks,
     type PartialHashResult
 } from '../lib/zk-wasm'
 
@@ -123,7 +121,7 @@ export async function generateBRACUProof(
     options: ProverOptions = {}
 ): Promise<ProofResult> {
     const { threads = 1 } = options
-    const CIRCUIT_MAX_REMAINING_HEADER = 512; // Max remaining header size in circuit (reduced for browser memory)
+    const CIRCUIT_MAX_REMAINING_HEADER = 2048; // Max remaining header size in circuit (increased for BRACU emails)
 
     if (!compiledCircuit) {
         throw new Error('Circuit not loaded. Call setCompiledCircuit() or loadCircuitFromUrl() first.')
@@ -143,113 +141,120 @@ export async function generateBRACUProof(
         console.warn('⚠️ WASM initialization warning (might be already initialized):', e);
     }
 
-    // Step 1: Parse email to get basic info and validate
-    console.log('📧 Parsing email for basic validation...')
+    // Step 1: Parse email to get basic info and DKIM data
+    console.log('📧 Parsing email and extracting DKIM data...')
     const basicInputs = await generateEmailVerifierInputs(rawEmail, {
         maxHeaderLength: 32768 // Large enough for any email header
     })
 
-    // CRITICAL FIX: Preserve the REAL DKIM data from WASM parsing
-    // The later call to generateEmailVerifierInputsWithPreprocessedHeader() uses extractDKIMInfo()
-    // which returns dummy values that fail bit-size validation
+    // Preserve REAL DKIM data from WASM parsing
     const realDkimData = {
         pubkey: basicInputs.pubkey,
         pubkeyRedc: basicInputs.pubkeyRedc,
         signature: basicInputs.signature
     };
-    console.log('🔑 Preserved real DKIM data from WASM parsing')
+    console.log('🔑 Extracted real DKIM signature and public key')
 
-    // Step 1.5: Preprocess email headers to reduce size for circuit
-    console.log('🔧 Preprocessing email headers for circuit constraints...')
+    // Step 2: Get original header bytes (UNMODIFIED)
     const originalHeaderBytes = new Uint8Array(
         (basicInputs.emailHeader || []).map((x: any) => Number(x))
     );
-    console.log(`   Original header size: ${originalHeaderBytes.length} bytes`);
+    console.log(`📊 Original header size: ${originalHeaderBytes.length} bytes`);
 
-    // Try preprocessing first
-    const preprocessedHeaderBytes = preprocessEmailHeaders(originalHeaderBytes);
-    console.log(`   Preprocessed header size: ${preprocessedHeaderBytes.length} bytes`);
-
-    // If still too large, use aggressive truncation
-    let processedHeaderBytes = preprocessedHeaderBytes;
-    if (preprocessedHeaderBytes.length > CIRCUIT_MAX_REMAINING_HEADER) {
-        console.log('   ⚠️  Header still too large, applying aggressive truncation...');
-        processedHeaderBytes = truncateHeaderForCircuit(preprocessedHeaderBytes, CIRCUIT_MAX_REMAINING_HEADER);
-        console.log(`   Truncated header size: ${processedHeaderBytes.length} bytes`);
-    }
-
-    // Step 2: Get From header indices from preprocessed header
-    // Note: We use the preserved DKIM data from Step 1, NOT from generateEmailVerifierInputsWithPreprocessedHeader
-    // because that function uses extractDKIMInfo() which returns DUMMY values
-    console.log('📧 Finding From header indices in preprocessed header...')
-    const emailInputs = await generateEmailVerifierInputsWithPreprocessedHeader(
-        processedHeaderBytes,
-        rawEmail
-    )
-    // Override the dummy DKIM data with the REAL data from WASM parsing
-    emailInputs.pubkey = realDkimData.pubkey;
-    emailInputs.pubkeyRedc = realDkimData.pubkeyRedc;
-    emailInputs.signature = realDkimData.signature;
-    console.log('✅ Using real DKIM data (not dummy values)')
-
-    // Step 3: Compute partial hash using WASM
-    console.log('🔢 Computing partial SHA256 hash via WASM...')
-    const headerBytes = processedHeaderBytes;
-
-    let partialHashResult: PartialHashResult;
+    // Step 3: Split header at 64-byte boundary (preserving original bytes!)
+    console.log('✂️  Splitting header at block boundary for partial hashing...')
+    let splitResult: HeaderSplitResult;
     try {
-        // Try WASM first
-        const wasmAvailable = await isPartialHashAvailable();
-        if (wasmAvailable) {
-            partialHashResult = await computePartialHash(headerBytes, CIRCUIT_MAX_REMAINING_HEADER);
-            console.log(`   ✅ WASM partial hash: ${partialHashResult.prehashedLength} bytes pre-hashed, ${partialHashResult.remaining.length} bytes remaining`);
-        } else {
-            console.log('   ⚠️ WASM not available, using JavaScript fallback');
-            partialHashResult = computePartialHashFallback(headerBytes, CIRCUIT_MAX_REMAINING_HEADER);
-        }
+        splitResult = splitHeaderAtBlockBoundary(originalHeaderBytes, CIRCUIT_MAX_REMAINING_HEADER);
     } catch (error) {
-        console.warn('   ⚠️ Partial hash failed, using fallback:', error);
-        partialHashResult = computePartialHashFallback(headerBytes, CIRCUIT_MAX_REMAINING_HEADER);
+        console.error('❌ Failed to split header:', error);
+        throw new Error(`Header splitting failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
-    // Step 3: Recalculate From header indices relative to remaining bytes
-    let fromHeaderIndex = emailInputs.fromHeaderIndex || 0;
-    let fromHeaderLength = emailInputs.fromHeaderLength || 0;
-    let fromAddressIndex = emailInputs.fromAddressIndex || 0;
-    let fromAddressLength = emailInputs.fromAddressLength || 0;
+    console.log(`   Pre-hashed: ${splitResult.prehashedLength} bytes (${splitResult.prehashedLength / 64} blocks)`);
+    console.log(`   Remaining: ${splitResult.remainingBytes.length} bytes (for circuit)`);
+    console.log(`   From header index: ${splitResult.fromHeaderIndex}`);
+    console.log(`   From address index: ${splitResult.fromAddressIndex}`);
 
-    // Debug logging for index adjustment
-    console.log(`📍 Original indices - Header: ${fromHeaderIndex}, Address: ${fromAddressIndex}`);
-    console.log(`📊 Partial hash result - Prehashed: ${partialHashResult.prehashedLength}, Remaining: ${partialHashResult.remaining.length}`);
+    // Step 4: Compute SHA256 state over pre-hashed bytes
+    console.log('🔢 Computing SHA256 partial state...')
+    let partialHashState: Uint32Array;
 
-    // Adjust indices for the offset from partial hash
-    const offset = partialHashResult.prehashedLength;
-    fromHeaderIndex = fromHeaderIndex - offset;
-    fromAddressIndex = fromAddressIndex - offset;
+    if (splitResult.prehashedLength === 0) {
+        // No pre-hashing needed, use initial SHA256 state
+        console.log('   ℹ️  Small header - no pre-hashing needed');
+        partialHashState = new Uint32Array([
+            0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+            0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+        ]);
+    } else {
+        // Compute actual SHA256 state over prehashed blocks
+        try {
+            partialHashState = computeSHA256StateOverBlocks(splitResult.prehashedBytes);
+            console.log(`   ✅ Computed SHA256 state over ${splitResult.prehashedLength} bytes`);
+        } catch (error) {
+            console.error('❌ SHA256 state computation failed:', error);
+            throw new Error(`SHA256 computation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
 
-    console.log(`🔧 Adjusted indices - Header: ${fromHeaderIndex}, Address: ${fromAddressIndex}`);
+    // Create PartialHashResult for compatibility with existing formatting function
+    const partialHashResult: PartialHashResult = {
+        state: partialHashState,
+        remaining: splitResult.remainingBytes,
+        totalLength: splitResult.totalLength,
+        prehashedLength: splitResult.prehashedLength
+    };
 
-    // CRITICAL FIX: If the From header is in the pre-hashed portion, we cannot verify it in circuit
-    // The circuit can only process data in the remaining bytes
+    // Use indices from split result (already adjusted for remaining bytes)
+    const fromHeaderIndex = splitResult.fromHeaderIndex;
+    const fromHeaderLength = splitResult.fromHeaderLength;
+    const fromAddressIndex = splitResult.fromAddressIndex;
+    const fromAddressLength = splitResult.fromAddressLength;
+
+    // Validate indices
     if (fromHeaderIndex < 0 || fromAddressIndex < 0) {
-        throw new Error(`From header is in pre-hashed portion of email (indices: ${fromHeaderIndex}, ${fromAddressIndex}). This email cannot be verified with the current partial hash approach.`);
+        throw new Error(`From header is in pre-hashed portion (indices: ${fromHeaderIndex}, ${fromAddressIndex}). Increase CIRCUIT_MAX_REMAINING_HEADER.`);
     }
 
-    // Validate indices are within circuit bounds (may be less than actual remaining if truncated)
-    const effectiveRemainingLength = Math.min(partialHashResult.remaining.length, CIRCUIT_MAX_REMAINING_HEADER);
-
-    if (fromHeaderIndex >= effectiveRemainingLength) {
-        throw new Error(`From header index ${fromHeaderIndex} is out of bounds after partial hash adjustment (max: ${effectiveRemainingLength})`)
+    // Comprehensive bounds validation to prevent circuit overflow
+    const remainingHeaderLength = splitResult.remainingBytes.length;
+    
+    // Validate header bounds
+    if (fromHeaderIndex >= remainingHeaderLength) {
+        throw new Error(`From header index ${fromHeaderIndex} out of bounds (max: ${remainingHeaderLength - 1})`);
     }
-    if (fromAddressIndex >= effectiveRemainingLength) {
-        throw new Error(`From address index ${fromAddressIndex} is out of bounds after partial hash adjustment (max: ${effectiveRemainingLength})`)
+    if (fromHeaderIndex + fromHeaderLength > remainingHeaderLength) {
+        throw new Error(`From header range [${fromHeaderIndex}, ${fromHeaderIndex + fromHeaderLength}) exceeds remaining header length ${remainingHeaderLength}`);
+    }
+    
+    // Validate address bounds
+    if (fromAddressIndex >= remainingHeaderLength) {
+        throw new Error(`From address index ${fromAddressIndex} out of bounds (max: ${remainingHeaderLength - 1})`);
+    }
+    if (fromAddressIndex + fromAddressLength > remainingHeaderLength) {
+        throw new Error(`From address range [${fromAddressIndex}, ${fromAddressIndex + fromAddressLength}) exceeds remaining header length ${remainingHeaderLength}`);
+    }
+    
+    // Validate address is within header
+    if (fromAddressIndex < fromHeaderIndex) {
+        throw new Error(`From address index ${fromAddressIndex} must be within From header starting at ${fromHeaderIndex}`);
+    }
+    if (fromAddressIndex + fromAddressLength > fromHeaderIndex + fromHeaderLength) {
+        throw new Error(`From address extends beyond From header bounds`);
+    }
+    
+    // Validate domain-specific constraints
+    const minDomainLength = 15; // 1 char + '@' + 13 char domain (g.bracu.ac.bd)
+    if (fromAddressLength < minDomainLength) {
+        throw new Error(`From address length ${fromAddressLength} too short for BRACU domain (minimum ${minDomainLength})`);
     }
 
-    // Step 4: Format circuit inputs with new structure
+    // Step 5: Format circuit inputs with new structure
     console.log('📦 Formatting circuit inputs...')
     const circuitInputs = formatCircuitInputsPartialHash(
         partialHashResult,
-        emailInputs,
+        realDkimData,
         fromHeaderIndex,
         fromHeaderLength,
         fromAddressIndex,
@@ -266,6 +271,8 @@ export async function generateBRACUProof(
     console.log('  From header length:', circuitInputs.from_header_sequence.length);
     console.log('  From address index:', circuitInputs.from_address_sequence.index);
     console.log('  From address length:', circuitInputs.from_address_sequence.length);
+    console.log('  From header end index:', Number(circuitInputs.from_header_sequence.index) + Number(circuitInputs.from_header_sequence.length));
+    console.log('  From address end index:', Number(circuitInputs.from_address_sequence.index) + Number(circuitInputs.from_address_sequence.length));
     console.log('  Pubkey modulus limbs:', circuitInputs.pubkey.modulus.length);
     console.log('  Signature limbs:', circuitInputs.signature.length);
     // Log first few bytes of header to verify format
@@ -346,7 +353,7 @@ function formatCircuitInputsPartialHash(
     fromAddressLength: number
 ): Record<string, any> {
     const TARGET_LIMBS = 18;
-    const MAX_REMAINING_HEADER = 512;
+    const MAX_REMAINING_HEADER = 2048;
 
     // Helper to pad arrays to exact length
     const padArray = (arr: any[], length: number, fillValue: string = "0") => {
@@ -377,12 +384,36 @@ function formatCircuitInputsPartialHash(
     // Format signature
     const signature = padArray(emailInputs.signature || [], TARGET_LIMBS);
 
+    // Debug: Log all indices and lengths before validation
+    console.log(`🔍 Debug indices before validation:`);
+    console.log(`   Remaining header length: ${partialHash.remaining.length}`);
+    console.log(`   From header: index=${fromHeaderIndex}, length=${fromHeaderLength}`);
+    console.log(`   From address: index=${fromAddressIndex}, length=${fromAddressLength}`);
+    console.log(`   Header range: [${fromHeaderIndex}, ${fromHeaderIndex + fromHeaderLength})`);
+    console.log(`   Address range: [${fromAddressIndex}, ${fromAddressIndex + fromAddressLength})`);
+
     // Validate indices
     if (fromAddressIndex <= 0) {
         throw new Error(`Invalid fromAddressIndex: ${fromAddressIndex}. Must be > 0.`);
     }
     if (fromAddressLength < 15) {
         throw new Error(`Email address too short: ${fromAddressLength} chars. BRACU emails require at least 15.`);
+    }
+
+    // CRITICAL: Check that indices don't exceed remaining header bounds
+    // This prevents "attempt to subtract with overflow" in the circuit
+    const remainingHeaderLength = partialHash.remaining.length;
+    if (fromHeaderIndex >= remainingHeaderLength) {
+        throw new Error(`From header index ${fromHeaderIndex} exceeds remaining header length ${remainingHeaderLength}`);
+    }
+    if (fromHeaderIndex + fromHeaderLength > remainingHeaderLength) {
+        throw new Error(`From header range [${fromHeaderIndex}, ${fromHeaderIndex + fromHeaderLength}) exceeds remaining header length ${remainingHeaderLength}`);
+    }
+    if (fromAddressIndex >= remainingHeaderLength) {
+        throw new Error(`From address index ${fromAddressIndex} exceeds remaining header length ${remainingHeaderLength}`);
+    }
+    if (fromAddressIndex + fromAddressLength > remainingHeaderLength) {
+        throw new Error(`From address range [${fromAddressIndex}, ${fromAddressIndex + fromAddressLength}) exceeds remaining header length ${remainingHeaderLength}`);
     }
 
     return {
